@@ -1,0 +1,8 @@
+extends layout
+block content
+  div
+    img(class='mb-4' src='/images/avocado.png' alt='' width='144' height='144')
+    div
+      h1(id='h1Address') #{resp}
+    div(id='divAnswer')
+  script(src='/javascripts/reqContractAddress.js')

@@ -1,0 +1,27 @@
+{
+  "name": "appavocadoweb",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cookie-parser": "^1.4.5",
+    "debug": "~2.6.9",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "http-errors": "~1.6.3",
+    "lodash": "^4.17.20",
+    "mongodb": "^3.6.0",
+    "mongoose": "^5.10.2",
+    "mongose": "0.0.2-security",
+    "morgan": "~1.9.1",
+    "pug": "^2.0.4",
+    "solc": "^0.6.12",
+    "web3": "^1.2.11"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}

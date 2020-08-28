@@ -1,0 +1,11 @@
+extends layout
+
+block content
+  div
+    img(class='mb-4' src='/images/avocado.png' alt='' width='144' height='144')
+  form(class='form-signin' action='/exec/rootConstructorM' method='POST')
+    input(type='text' id='inputKey' name='addressU' class='form-control' placeholder='Root public key address' required autofocus)
+    input(type='text' id='inputEmail' name='email' class='form-control' placeholder='Root email address' required)
+    input(type='password' id='inputPassword' name='password' class='form-control' required)    
+    button(class='btn btn-lg btn-primary btn-block' type='submit') Sig in
+

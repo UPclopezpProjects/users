@@ -1,0 +1,31 @@
+extends layout
+
+block content
+  h1 Root #{output}
+  button(onclick='findSmartContractDetail();') Smart Contract Details
+  div(id='divSmartContract' sesid=ssid)
+  a(href='/') index
+  script(src='/javascripts/getSmartContract.js')
+
+  section
+    h1() Adding Administrator
+    form(action='/exec/addA' method='POST')
+      table
+        tr
+           td Complete name:
+           td 
+             input(type='text' name='name')
+        tr
+           td Administrator Public Address:
+           td 
+             input(type='text' name='addressA')
+        tr 
+           td Root Public Address:
+           td 
+             input(type='text' name='addressR')
+        tr
+           td 
+           td 
+             input(type='submit' name='add' value='Add')
+
+  br
