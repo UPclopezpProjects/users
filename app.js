@@ -49,7 +49,7 @@ app.use(function(err, req, res, next) {
 });
 
 var mongoose = require('mongoose');
-var mongoDB = 'mongodb://172.17.0.1:27017/mydb';
+var mongoDB = 'mongodb://172.17.0.1:27017/users';
 
 mongoose.connect(mongoDB,{
   useUnifiedTopology: true,

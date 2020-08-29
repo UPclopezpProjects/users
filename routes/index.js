@@ -7,28 +7,7 @@ var restRoot = require('../controller/restRoot.js');
 var restAdmor = require('../controller/restAdmor.js');
 var restToken = require('../controller/restToken.js');
 var us = require('../controller/users.js');
-/* GET home page. */
 
-/*router.get('/', function(req, res, next) {
-  var r = initialized();
-  res.render('index', { title: 'Sig-in' });
-});
-*/
-
-/* GET home page. */
-/*router.get('/getMyContract', function(req, res, next) {
-  getMyContract(req,res);
-});
-
-router.post('/exec/createContract', function (req, res, next){
-	var answer = createContract(req,res);
-   	res.render('contractCreated', { resp: answer });
- });
-*/
-
-
-//router.get('/getMyContract/dirs/:dirId', main.getMyContract);
-//router.get('/getMyContract',root.getRootSCAddress); //tempo
 
 //************************************************
 //************************************************
