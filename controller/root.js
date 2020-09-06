@@ -81,59 +81,11 @@ initializer.getAddTransR = function (par,resp) {
 
 //save root in the smart contract
 function createRootSC(req,resp){
-	//rootCreation involves create root in database and create a smart contract
-	compiler = require('solc');
-	const fs = require('fs'); 
-	const rootSol = 'RootSC.sol';
-	sourceCode = fs.readFileSync(rootSol, 'UTF8').toString();
-	const path = require('path');	
-	const solc = require('solc');
-	const veh = path.resolve('', '', rootSol);
-	const source = fs.readFileSync(veh, 'UTF-8');
-	
-	var input = {
-	    language: 'Solidity',
-	    sources: {
-	        rootSol : {
-	            content: source
-	        }
-	    },
-	    settings: {
-	        outputSelection: {
-	            '*': {
-	                '*': [ '*' ]
-	            }
-	        }
-	    }
-	}; 
-	compiledCode = JSON.parse(solc.compile(JSON.stringify(input)));
-	contracts = compiledCode.contracts;
-	avoContract = contracts.rootSol.RootSC.abi; //it depends of the Contract name
-	byteCodeVeh = contracts.rootSol.RootSC.evm.bytecode.object; //it depends of the Contract name
 
-	address = req.body.addressU; //obtaining public key account
+	//llamar a través de proceso remoto la petición de agregar a la blockchain
+	//it will be done by means a restfull request
 	var resultado = 0;
-	try{
-		var Web3 = require('web3');
-		var web3 = new Web3(Web3.givenProvider || blockchainAddress);
-
-		rootContract = new web3.eth.Contract(avoContract);
-	    rootContract.deploy({data: byteCodeVeh}).send({from: address, gas: 4700000
-	    	}, function(err, transactionHash){
-	    		if(err){
-	    			candado = true;
-        			resp.send(error.jsonRespError(60));
-        			return 60;
-	    		}
-	    	})
-	    	.on('receipt', function(receipt){
-	     		receiptG = receipt;
-	     	User_.save(req,receiptG.contractAddress,receiptG.transactionHash,statusV.rootCreation,resp,1); //add user to the database
-	     }).on('error', console.error); 
-	}catch(err){
-		resultado = 60;
-	}
-
+   	User_.save(req,receiptG.contractAddress,receiptG.transactionHash,statusV.rootCreation,resp,1); //add user to the database
     return resultado;
 }
 
@@ -154,12 +106,12 @@ function checkMutualExclusion(req,resp){
 	        	candado = true;
 			   	resp.send(error.jsonRespError(1)); 
 	        }else{
-				var answer = createRootSC(req,resp);
+				var answer = remoteCall.createRootSC(req,resp);
 				res = answer;	
 	        } 
 	    });
 	}else{		
-		res = 2; // error numer 2 is returned
+		res = 2; // error number 2 is returned
 	}
 	return res;
 }

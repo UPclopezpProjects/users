@@ -7,7 +7,7 @@ initializer.createRoot = function (req, res){
 	var token="0";  //the token when root is created will be 0
 	var email=req.query.email;
 	var password=req.query.password;
-	var addressU=req.query.addressU;7//in this case is the root address
+	var addressU=req.query.addressU;//in this case is the root address
 	var obj={body:{email:email,
 					password:password,
 					addressU:addressU,
