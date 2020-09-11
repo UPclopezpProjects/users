@@ -24,7 +24,7 @@ initializer.getAddContrR = function (par,resp) {
 			if(answer.email==""){
 				resp.send(error.jsonRespError(70));
 			}else{
-					User.find({status:statusV.rootCreation}).exec(function(err, users){
+					User.find({type:statusV.rootCreation}).exec(function(err, users){
 						if(err){
 							resp.send(error.jsonRespError(50));
 						}
@@ -56,7 +56,7 @@ initializer.getAddTransR = function (par,resp) {
 			if(answer.email==""){
 				res.send(error.jsonRespError(70));
 			}else{
-					User.find({status:statusV.rootCreation}).exec(function(err, users){
+					User.find({type:statusV.rootCreation}).exec(function(err, users){
 						if(err){
 							resp.send(error.jsonRespError(50));
 						}
@@ -78,13 +78,24 @@ initializer.getAddTransR = function (par,resp) {
 	}
 }
 
+function createUserSC(req){
+	//falta implementar conectarse al servidor
+	//it will be done by means a restfull request
+	//resultado = sbi(req);
+	var resultado = {
+		transactionHash:"0xFFFFFFFFFF";
+		contractAddress:"0xFFFFFFFFFF";
+	};
+	//*****************************
+	return resultado;
+}
+
 
 //save root in the smart contract
-function createRootSC(req,resp){
+function createRoot(req,resp){
 
 	//llamar a través de proceso remoto la petición de agregar a la blockchain
-	//it will be done by means a restfull request
-	var resultado = 0;
+	var receiptG = createUserSC(req);
    	User_.save(req,receiptG.contractAddress,receiptG.transactionHash,statusV.rootCreation,resp,1); //add user to the database
     return resultado;
 }
@@ -96,7 +107,7 @@ function checkMutualExclusion(req,resp){
 	var res=0;
 	if(candado){ //only one thread must intro in this part
 		candado = false; 
-		User.find({status:statusV.rootCreation}).exec(function(err, users){
+		User.find({type:statusV.rootCreation}).exec(function(err, users){
 			if(err){
 				candado = true;
 				resp.send(error.jsonRespError(53)); 
@@ -106,7 +117,7 @@ function checkMutualExclusion(req,resp){
 	        	candado = true;
 			   	resp.send(error.jsonRespError(1)); 
 	        }else{
-				var answer = remoteCall.createRootSC(req,resp);
+				var answer = remoteCall.createRoot(req,resp);
 				res = answer;	
 	        } 
 	    });
@@ -234,7 +245,7 @@ initializer.AddAdmor=function(req,res){
 		//First, we must verify that token is linked with the root
 		//To do tat, we are going to form an objet with the search
 		var search = {email:"",
-					  status:statusV.rootCreation};
+					  type:statusV.rootCreation};
 		getRegister(search,req.body.token,function(resultado){
 			if(resultado==""){
 				res.send(error.jsonRespError(4)); //error code is sent as an answer

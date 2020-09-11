@@ -1,12 +1,13 @@
 var express = require('express');
 var router = express.Router();
 
-var main = require('../controller/index.js');
-var modelRoot = require('../controller/modelRoot.js');
-var restRoot = require('../controller/restRoot.js');
-var restAdmor = require('../controller/restAdmor.js');
-var restToken = require('../controller/restToken.js');
-var us = require('../controller/users.js');
+//var main = require('../controller/index.js');
+//var modelRoot = require('../controller/modelRoot.js');
+var userCreation = require('../controller/userCreation.js');
+//var restAdmor = require('../controller/restAdmor.js');
+//var restToken = require('../controller/restToken.js');
+var sbi = require('../controller/sbi.js');
+//var us = require('../controller/users.js');
 
 
 //************************************************
@@ -15,30 +16,30 @@ var us = require('../controller/users.js');
 //************************************************
 //TOKEN
 //************************************************
-router.post('/exec/getToken', restToken.createToken);
+//router.post('/exec/getToken', restToken.createToken);
 //router.post('/exec/isValid', restToken.isValid); //not token public is available
-router.post('/exec/who', restToken.who); //not token public is available
+//router.post('/exec/who', restToken.who); //not token public is available
 //************************************************
 
 //ROOT
-router.post('/exec/rootConstructor', restRoot.createRoot); 
-router.post('/exec/getAddContrR', restRoot.getAddContrR);
-router.post('/exec/getAddTransR', restRoot.getAddTransR);
+router.post('/exec/rootConstructor', userCreation.createUser); 
+router.post('/exec/getAddContrR', userCreation.getAddContrR);
+router.post('/exec/getAddTransR', userCreation.getAddTransR);
 //************************************************
 //ADMINISTRATOR
-router.post('/exec/admorConstructor', restAdmor.createAdmor); 
+//router.post('/exec/admorConstructor', restAdmor.createAdmor); 
 //router.post('/exec/getAddContrR', restRoot.getAddContrR);
 //router.post('/exec/getAddTransR', restRoot.getAddTransR);
 //************************************************
 
-//************************************************
-//************************************************
-//routes returning some model
-//router.get('/', main.index);
-//router.post('/exec/rootConstructorM', modelRoot.createRoot); // returns a model about root created
-//router.post('/exec/authenticate', us.login);
 
-//router.post('/getSmartContract', us.getSmartContract);
+//SBI
+router.post('/exec/permit', sbi.permit); 
+//router.post('/exec/getAddContrR', restRoot.getAddContrR);
+//router.post('/exec/getAddTransR', restRoot.getAddTransR);
+//************************************************
+
+
 
 //************************************************
 

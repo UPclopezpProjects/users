@@ -3,18 +3,30 @@ var error = require("../controller/errResulUtils");
 
 var initializer = {};
 
-initializer.createRoot = function (req, res){
-	var token="0";  //the token when root is created will be 0
+initializer.createUser = function (req, res){
 	var email=req.query.email;
 	var password=req.query.password;
-	var addressU=req.query.addressU;//in this case is the root address
+	var addressU=req.query.addressU;
+	var type=req.query.type; // 1 is the root
+	var token=req.query.token; // 1 is the root	
 	var obj={body:{email:email,
 					password:password,
 					addressU:addressU,
 					token:token
 				  }
 			};
-	var answerCode = root.Root(obj,res);
+	var answerCode=0;
+	switch(type){
+		case "1":
+			answerCode = root.Root(obj,res);
+			break;
+		//case "2":
+			//answerCode = root.AddAdmor(obj,res);
+		default: 
+			answerCode =31;
+	}
+
+
 	if(answerCode!=0){ 
 		//it means that an error has happened
 		//These erros are controlled when not callback functions are implemented yet 
