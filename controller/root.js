@@ -79,12 +79,12 @@ initializer.getAddTransR = function (par,resp) {
 }
 
 function createUserSC(req){
-	//falta implementar conectarse al servidor
+	//falta implementar conectarse al microservicio de audit
 	//it will be done by means a restfull request
-	//resultado = sbi(req);
+	//resultado = sbi("172.18.0.2:3000",req);
 	var resultado = {
-		transactionHash:"0xFFFFFFFFFF";
-		contractAddress:"0xFFFFFFFFFF";
+		transactionHash:"0xFFFFFFFFFF",
+		contractAddress:"0xFFFFFFFFFF"
 	};
 	//*****************************
 	return resultado;
@@ -117,7 +117,7 @@ function checkMutualExclusion(req,resp){
 	        	candado = true;
 			   	resp.send(error.jsonRespError(1)); 
 	        }else{
-				var answer = remoteCall.createRoot(req,resp);
+				var answer = createRoot(req,resp);
 				res = answer;	
 	        } 
 	    });
@@ -134,7 +134,8 @@ initializer.Root=function(req,res){
 	var r=result.someFieldIsEmpty(req);
 	if (r==0){
 		var resp = checkMutualExclusion(req,res);
-		return resp;
+		res.send(resp);
+		return 0;
 	}else{
 		return (r);
 	}

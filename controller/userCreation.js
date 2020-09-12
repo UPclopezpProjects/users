@@ -15,6 +15,7 @@ initializer.createUser = function (req, res){
 					token:token
 				  }
 			};
+	/*		
 	var answerCode=0;
 	switch(type){
 		case "1":
@@ -33,7 +34,8 @@ initializer.createUser = function (req, res){
 		res.send(error.jsonRespError(answerCode)); //error code is sent as an answer
 	}else{//it means that an error number 0 happened, it is out our reach
 		//res.send("Root created with address:" + addressU);
-	}
+	}*/
+	res.send(obj);
 }
 
 

@@ -23,8 +23,8 @@ var sbi = require('../controller/sbi.js');
 
 //ROOT
 router.post('/exec/rootConstructor', userCreation.createUser); 
-router.post('/exec/getAddContrR', userCreation.getAddContrR);
-router.post('/exec/getAddTransR', userCreation.getAddTransR);
+//router.post('/exec/getAddContrR', userCreation.getAddContrR);
+//router.post('/exec/getAddTransR', userCreation.getAddTransR);
 //************************************************
 //ADMINISTRATOR
 //router.post('/exec/admorConstructor', restAdmor.createAdmor); 
