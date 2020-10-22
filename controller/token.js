@@ -1,10 +1,90 @@
-var mongoose = require('mongoose');
+//
+var Token = require("../models/Tokens");
+
+var service_jwt = require('../services/jwt');
+var moment = require('moment');
+//
+
 var User = require("../models/Users");
-var Token = require("../models/token");
-
+var mongoose = require('mongoose');
 var errResulUtils = require("../controller/errResulUtils");
-
 var initializer = {};
+
+//--------------------------------------------New--------------------------------------------
+function tokenCreation(user, initialToken, generatedToken, authToken, dp){
+	var token = new Token();
+	iat = moment().unix(); //Momento de creación del token (fecha y hora exacta)
+	exp = moment().add(1, 'm').unix(); //Agrega 1 minutos en tiempo UNIX
+	token.email = user.email; //Prueba
+	token.initialToken = initialToken;
+	token.generatedToken = generatedToken;
+	//token.authToken = service_jwt.generateToken(user, dp);
+	token.authToken = authToken;
+	token.creation = iat;
+	token.life = exp;
+	//console.log(token);
+	token.save((err, tokentStored) => {
+		if(err){
+			res.status(500).send({message: 'Error al guardar los datos'})
+		}else{
+			if(!tokentStored){
+				res.status(404).send({message: 'El dato no ha sido guardado'});
+			}else{
+				console.log("Token guardado");
+				//res.status(200).send({datos: tokentStored});
+			}
+		}
+	});
+}
+
+function tokenRenovation(req, res){
+	var initialToken = req.body.initialToken; //Tendría que ser con el authToken
+	var email = req.body.email;
+	var query = { initialToken: initialToken, email: email };
+	var update = moment().add(7, 'd').unix();
+
+	Token.findOneAndUpdate(query, {life: update}, (err, data) => {
+		if(err){
+			res.status(500).send({message: 'Error en la petición'});
+		}else{
+			if(!data){
+				res.status(404).send({message: 'El token o email no existe'});
+			}else{
+				res.status(200).send({
+					token: service_jwt.renovationToken(data)
+				});
+			}
+		}
+	});
+}
+
+function tokenIsValid(req, res){
+	var initialToken = req.body.initialToken;
+	var valid = moment().unix();
+	var bol = false;
+
+	Token.findOne({ initialToken: initialToken }, (err, data) => {
+	console.log("2");
+
+		if(err){
+			res.status(500).send({message: 'Error en la petición'});
+		}else{
+			if(!data){
+				res.status(404).send({message: 'El token no existe'});
+			}else{
+				if(data.life <= valid){
+					console.log("Token caducado");
+					res.status(200).send({response: bol});
+				}else{
+					bol = true;
+					console.log("Token vigente");
+					res.status(200).send({response: bol});
+				}
+			}
+		}
+	});
+}
+//--------------------------------------------New--------------------------------------------
 
 
 function getToday(){
@@ -161,5 +241,8 @@ initializer.whoP=function(token,fn){
 }
 
 
-
-module.exports = initializer;
+module.exports = {
+	tokenCreation,
+	tokenRenovation,
+	tokenIsValid
+};

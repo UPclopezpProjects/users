@@ -5,41 +5,50 @@ var algorithm = 'HS256';
 //var algorithm = 'HS384';
 
 
-exports.createToken = function(req, user, description){
+exports.createToken = function(req, user, type){
 	var payload = {
-		id: user._id,
-		email: req.body.email,
-		password: user.password,
-		key: req.body.key,
-		type: req.body.typeOfUser,
-		token: req.body.Token,
-		dc: description,
-		iat: moment().unix(), //Momento de creación del token (fecha y hora exacta)
-		exp: moment().add(7, 'd').unix() //Agrega 7 días en tiempo UNIX
+		userId: user._id,
+		userEmail: user.email,
+		userPassword: user.password,
+		typeOfUser: user.typeOfUser,
+		initialToken: user.initialToken,
+		key: req.body.key, //REVISAR
+		DP: req.body.dp,
+		DC: type.description,
+		creation: moment().unix(), //Momento de creación del token (fecha y hora exacta)
+		life: moment().add(7, 'd').unix() //Agrega 7 días en tiempo UNIX
 	};
 	return jwt.encode(payload, secret, algorithm);
 };
 
-exports.generateToken = function(user, R){
+exports.generateToken = function(user, dp){
 	var payload = {
-		id: user._id,
-		email: user.email,
-		password: user.password,
-		type: user.type,
-		r: R,
-		iat: moment().unix(), //Momento de creación del token (fecha y hora exacta)
-		exp: moment().add(7, 'days').unix() //Cambiar esto para que solo dure mientras esté la sesión
+		userId: user._id,
+		userEmail: user.email,
+		userPassword: user.password,
+		typeOfUser: user.typeOfUser,
+		DP: dp,
+		creation: moment().unix(), //Momento de creación del token (fecha y hora exacta)
+		life: moment().add(7, 'days').unix() //Cambiar esto para que solo dure mientras esté la sesión
 	};
 	return jwt.encode(payload, secret, algorithm);
 };
 
 exports.renovationToken = function(data){
 	var payload = {
-		id: data._id,
-		email: data.email,
-		token: data.password,
+		userId: data._id,
+		userEmail: data.email,
+		token: data.generateToken,
 		creation: data.creation, //Momento de creación del token (fecha y hora exacta)
 		life: data.life //Cambiar esto para que solo dure mientras esté la sesión
 	};
 	return jwt.encode(payload, secret, algorithm);
 };
+
+/*
+module.exports = {
+	createToken,
+	generateToken,
+	renovationToken
+};
+*/

@@ -11,6 +11,11 @@ var sbi = require('../controller/sbi.js');
 
 var root = require('../controller/root.js');
 
+var UserController = require('../controller/user');
+var TokenController = require('../controller/token');
+var PermitController = require('../controller/permit')
+
+
 
 
 //************************************************
@@ -46,24 +51,22 @@ router.post('/exec/permit', sbi.permit);
 
 
 
-//Pruebas de conexión y obtención de datos
-router.post('/userCreation', root.userCreation);
-router.put('/userUpdate', root.userUpdate);
-router.delete('/userDelete', root.userDelete);
-router.post('/login', root.loginUser);
+/*----------Pruebas de conexión y obtención de datos----------*/
+//UserAdministration
+router.post('/userCreation', UserController.userCreation);
+router.put('/userUpdate', UserController.userUpdate);
+router.delete('/userDelete', UserController.userDelete);
+router.post('/login', UserController.loginUser);
 
-router.put('/tokenRenovation', root.tokenRenovation);
-router.post('/tokenIsValid', root.tokeIsValid);
-
-router.post('/hasAcces', root.hasAcces);
-
-
+//Authentication
+router.put('/tokenRenovation', TokenController.tokenRenovation);
+router.post('/tokenIsValid', TokenController.tokenIsValid);
 
 
 
-
-
-
+//Permit
+router.post('/hasAcces', PermitController.hasAcces);
+/*----------Pruebas de conexión y obtención de datos----------*/
 
 module.exports = router;
 

@@ -7,8 +7,8 @@ var UserSchema = Schema({
     addressU: {type: String, required: true, max: 200},
     addressContract: {type: String, required: true, max: 200}, //
     addressTransaction: {type: String, required: true, max: 200}, //
-    type: {type: String, required: true, max: 20}, //"rootCreation","admorCreation" //
-    token:{type: String, required: true, max: 50} //
+    typeOfUser: {type: String, required: true, max: 20}, //"rootCreation","admorCreation" //
+    initialToken: {type: String, required: true, max: 50} //
 });
 
 //Example about models

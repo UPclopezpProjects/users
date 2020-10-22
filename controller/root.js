@@ -2,17 +2,17 @@
 var http = require('http');
 var https = require('https');
 var bcrypt = require('bcrypt-nodejs');
-var jwtt = require('../services/jwt');
+var service_jwt = require('../services/jwt');
 var jwt = require('jwt-simple');
 var Dictionary = require("../models/Transactions");
-var Tokenn = require("../models/token");
+var Tokenn = require("../models/Tokens");
 var moment = require('moment');
 var secret = 'secret_key';
 //
 
 //var mongoose = require('mongoose');
 var User = require("../models/Users");
-var User_ = require("../controller/users");
+var User_ = require("../controller/user");
 var error = require("../controller/errResulUtils");
 var result = require("../controller/errResulUtils");
 var Token = require("../controller/Token");
@@ -310,9 +310,9 @@ function createUserSCC(req, next) {
         method: 'GET',
     };
     */
-    var option = 'http://172.20.0.4:3000/exec/createUser?key=0xA1a66A73294C539344e9e2Dc8881471cC3b2f496&hashX=sldajfkldsjlfa&typeOfUser=Administrator&Token=2421412421&typeOfOperation=create1';
+    var option = 'http://172.20.0.3:3000/exec/createUser?key=0xA1a66A73294C539344e9e2Dc8881471cC3b2f496&hashX=sldajfkldsjlfa&typeOfUser=Administrator&Token=2421412421&typeOfOperation=create1';
     var options = {
-        host: '172.20.0.4',
+        host: '172.20.0.2',
         port: '3000',
         //path: '/exec/createUser?key=0xA1a66A73294C539344e9e2Dc8881471cC3b2f496&hash=sldajfkldsjlfa&typeOfUser=1',
         path: '/exec/createUser'+'?'+'key='+key+'&hashX='+hashX+'&typeOfUser='+typeOfUser+'&Token='+Token+'&typeOfOperation='+typeOfOperation,
@@ -354,7 +354,7 @@ function serviceInit(options, next) {
                 response = JSON.parse(data);
             }
             // Invocamos el next con los datos de respuesta e imprimos en cosola
-            //console.log('Respuesta: ', response);
+            console.log('Respuesta: ', response);
             next(response, null);
         })
         .on('error', function(err) {
@@ -432,7 +432,7 @@ function userCreation(req, res) {
 											}else{
 												var description = type.description;
 												res.status(200).send({
-													token: jwtt.createToken(req, user, description)
+													token: service_jwt.createToken(req, user, description)
 												});
 												//res.status(200).send({typeOfOperation: type});
 											}
@@ -622,7 +622,7 @@ function tokenRenovation(req, res){
 				res.status(404).send({message: 'El token o email no existe'});
 			}else{
 				res.status(200).send({
-					token: jwtt.renovationToken(data)
+					token: service_jwt.renovationToken(data)
 				});
 			}
 		}
@@ -676,7 +676,6 @@ function hasAcces(req, res){
 }
 //--------------------------------------------New--------------------------------------------
 
-//module.exports = initializer;
 module.exports = {
 	initializer,
 	createUserSCC,
