@@ -1,4 +1,3 @@
-var root = require("../controller/root");
 var error = require("../controller/errResulUtils");
 
 var initializer = {};
@@ -42,13 +41,13 @@ initializer.createUser = function (req, res){
 initializer.getAddContrR = function (req, res){
 	var token=req.query.token;
 	var obj={body:{token:token}};
-	root.getAddContrR(obj,res);
+	//root.getAddContrR(obj,res);
 }
 
 initializer.getAddTransR = function (req, res){
 	var token=req.query.token;
 	var obj={body:{token:token}};
-	root.getAddTransR(obj,res);
+	//root.getAddTransR(obj,res);
 }
 
 

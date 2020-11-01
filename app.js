@@ -1,5 +1,5 @@
 //
-global.host = '172.20.0.2';
+global.host = '172.20.0.3';
 global.port = '3000';
 global.method = {
   POST: 'POST',

@@ -5,22 +5,17 @@ var algorithm = 'HS256';
 //var algorithm = 'HS384';
 
 
-exports.createToken = function(req, user, type){
+exports.createToken = function(user){
 	var payload = {
-		userId: user._id,
-		userEmail: user.email,
-		userPassword: user.password,
+		_id: user._id,
 		typeOfUser: user.typeOfUser,
-		initialToken: user.initialToken,
-		key: req.body.key, //REVISAR
-		DP: req.body.dp,
-		DC: type.description,
+		DP: user.dp,
 		creation: moment().unix(), //Momento de creación del token (fecha y hora exacta)
 		life: moment().add(7, 'd').unix() //Agrega 7 días en tiempo UNIX
 	};
 	return jwt.encode(payload, secret, algorithm);
 };
-
+/*
 exports.generateToken = function(user, dp){
 	var payload = {
 		userId: user._id,
@@ -33,7 +28,8 @@ exports.generateToken = function(user, dp){
 	};
 	return jwt.encode(payload, secret, algorithm);
 };
-
+*/
+/*
 exports.renovationToken = function(data){
 	var payload = {
 		userId: data._id,
@@ -44,6 +40,7 @@ exports.renovationToken = function(data){
 	};
 	return jwt.encode(payload, secret, algorithm);
 };
+*/
 
 /*
 module.exports = {

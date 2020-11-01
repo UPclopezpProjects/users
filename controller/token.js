@@ -11,9 +11,9 @@ var errResulUtils = require("../controller/errResulUtils");
 var initializer = {};
 
 //--------------------------------------------New--------------------------------------------
-function tokenCreation(user, initialToken, generatedToken, authToken, dp){
+function tokenCreation(newToken, email/*user, initialToken, generatedToken, authToken, dp*/){
 	var token = new Token();
-	iat = moment().unix(); //Momento de creación del token (fecha y hora exacta)
+	/*iat = moment().unix(); //Momento de creación del token (fecha y hora exacta)
 	exp = moment().add(1, 'm').unix(); //Agrega 1 minutos en tiempo UNIX
 	token.email = user.email; //Prueba
 	token.initialToken = initialToken;
@@ -21,14 +21,17 @@ function tokenCreation(user, initialToken, generatedToken, authToken, dp){
 	//token.authToken = service_jwt.generateToken(user, dp);
 	token.authToken = authToken;
 	token.creation = iat;
-	token.life = exp;
+	token.life = exp;*/
 	//console.log(token);
+	token.generateToken = newToken;
+	token.userId = email;
+
 	token.save((err, tokentStored) => {
 		if(err){
-			res.status(500).send({message: 'Error al guardar los datos'})
+			return 'message: Error al guardar los datos';
 		}else{
 			if(!tokentStored){
-				res.status(404).send({message: 'El dato no ha sido guardado'});
+				return 'message: El dato no ha sido guardado';
 			}else{
 				console.log("Token guardado");
 				//res.status(200).send({datos: tokentStored});
@@ -61,11 +64,9 @@ function tokenRenovation(req, res){
 function tokenIsValid(req, res){
 	var initialToken = req.body.initialToken;
 	var valid = moment().unix();
-	var bol = false;
+	var bol;
 
 	Token.findOne({ initialToken: initialToken }, (err, data) => {
-	console.log("2");
-
 		if(err){
 			res.status(500).send({message: 'Error en la petición'});
 		}else{
@@ -73,6 +74,7 @@ function tokenIsValid(req, res){
 				res.status(404).send({message: 'El token no existe'});
 			}else{
 				if(data.life <= valid){
+					bol = false;
 					console.log("Token caducado");
 					res.status(200).send({response: bol});
 				}else{

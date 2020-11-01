@@ -9,7 +9,7 @@ var userCreation = require('../controller/userCreation.js');
 var sbi = require('../controller/sbi.js');
 //var us = require('../controller/users.js');
 
-var root = require('../controller/root.js');
+//var root = require('../controller/root.js');
 
 var UserController = require('../controller/user');
 var TokenController = require('../controller/token');
@@ -53,9 +53,21 @@ router.post('/exec/permit', sbi.permit);
 
 /*----------Pruebas de conexión y obtención de datos----------*/
 //UserAdministration
-router.post('/userCreation', UserController.userCreation);
-router.put('/userUpdate', UserController.userUpdate);
-router.delete('/userDelete', UserController.userDelete);
+/*router.post('/userCreation', function(req, res){
+  UserController.userCreation
+});
+router.put('/userUpdate/:id', function(req, res){
+  UserController.userUpdate
+});
+router.delete('/userDelete/:id', function(req, res){
+  UserController.userDelete
+});
+router.post('/login', function(req, res){
+  UserController.loginUser
+});*/
+router.post('/userCreation', UserController.userCreate);
+router.put('/userUpdate/:id', UserController.userUpdate);
+router.delete('/userDelete/:id', UserController.userDelete);
 router.post('/login', UserController.loginUser);
 
 //Authentication
@@ -67,6 +79,8 @@ router.post('/tokenIsValid', TokenController.tokenIsValid);
 //Permit
 router.post('/hasAcces', PermitController.hasAcces);
 /*----------Pruebas de conexión y obtención de datos----------*/
+
+router.get('/pruebas/:id', PermitController.hasAcces);
 
 module.exports = router;
 
