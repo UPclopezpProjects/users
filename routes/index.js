@@ -68,19 +68,19 @@ router.post('/login', function(req, res){
 router.post('/userCreation', UserController.userCreate);
 router.put('/userUpdate/:id', UserController.userUpdate);
 router.delete('/userDelete/:id', UserController.userDelete);
-router.post('/login', UserController.loginUser);
 
 //Authentication
+router.post('/login', TokenController.authenticate);
 router.put('/tokenRenovation', TokenController.tokenRenovation);
 router.post('/tokenIsValid', TokenController.tokenIsValid);
 
 
 
 //Permit
-router.post('/hasAcces', PermitController.hasAcces);
+router.get('/permitions', PermitController.permitions);
+
 /*----------Pruebas de conexión y obtención de datos----------*/
 
-router.get('/pruebas/:id', PermitController.hasAcces);
 
 module.exports = router;
 

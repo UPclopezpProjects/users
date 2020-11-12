@@ -1,30 +1,79 @@
 //
 var Token = require("../models/Tokens");
+var User = require("../models/Users");
+
+var jwt = require('jwt-simple');
+var moment = require('moment');
+var bcrypt = require('bcrypt-nodejs');
+
 
 var service_jwt = require('../services/jwt');
-var moment = require('moment');
+var permit = require("../controller/permit");
 //
 
-var User = require("../models/Users");
-var mongoose = require('mongoose');
-var errResulUtils = require("../controller/errResulUtils");
-var initializer = {};
+//var User = require("../models/Users");
+//var errResulUtils = require("../controller/errResulUtils");
+//var initializer = {};
 
 //--------------------------------------------New--------------------------------------------
-function tokenCreation(newToken, email/*user, initialToken, generatedToken, authToken, dp*/){
+function authenticate(req, res){
+    var token = req.headers.token.replace(/['"]+/g, '');
+    var payload = decodeToken(token);
+    var id = payload._id.toLowerCase();
+
+    var email = req.body.email;
+    var password = req.body.password;
+    var typeOfUser = req.body.typeOfUser; //FALTA CHECAR ESTO
+
+    var tokeninitial = req.headers.token;
+    var typeOfOperation = req.headers.typeofoperation;
+    var nameOfOperation = req.headers.nameofoperation;
+    var typeOfOperationOK = permit.hasAccess(tokeninitial, typeOfOperation, nameOfOperation);
+
+    var query = {email: email};
+    //Modificar
+    User.findOne(query, (err, user) => {
+    	if(err){
+    		res.status(500).send({message: 'Error en la petición'});
+    	}else{
+    		if(!user){
+    			res.status(404).send({message: 'El usuario no existe'});
+    		}else{
+    			//Comprobar la contraseña
+    			bcrypt.compare(password, user.password, function(err, check){
+    				if(check){
+    					//Duvuelve los datos del usuario logueado
+    					if(req.body.gethash){
+    						//Delvover un token de JWT
+    						console.log("ERROR");
+    					}else{
+    						if(typeOfOperationOK == true && user.email == payload._id && req.body.typeOfUser == user.typeOfUser){
+    							res.status(200).send({
+    								token: "Entraste"
+    							});
+    						}else if(typeOfOperationOK == false){
+    							res.status(200).send({message: 'No tienes permisos para iniciar sesión'});
+    						}else if(user.email != payload._id){
+    							res.status(200).send({message: 'Los ID´s no coinciden'});
+    						}else if(req.body.typeOfUser != user.typeOfUser){
+    							res.status(200).send({message: 'El tipo de usuario -'+req.body.typeOfUser+'- no coincide con el tipo de usuario -'+user.typeOfUser+'-'});
+    						}else{
+    							res.status(200).send({message: 'Existen errores al loguearse'});
+    						}
+    					}
+    				}else{
+    					res.status(404).send({message: 'El usuario no se ha podido indentificar'});
+    				}
+    			})
+    		}
+    	}
+    });
+}
+
+function tokenCreation(newToken, email){
 	var token = new Token();
-	/*iat = moment().unix(); //Momento de creación del token (fecha y hora exacta)
-	exp = moment().add(1, 'm').unix(); //Agrega 1 minutos en tiempo UNIX
-	token.email = user.email; //Prueba
-	token.initialToken = initialToken;
-	token.generatedToken = generatedToken;
-	//token.authToken = service_jwt.generateToken(user, dp);
-	token.authToken = authToken;
-	token.creation = iat;
-	token.life = exp;*/
-	//console.log(token);
-	token.generateToken = newToken;
-	token.userId = email;
+	token.generatedToken = newToken;
+	token.email = email;
 
 	token.save((err, tokentStored) => {
 		if(err){
@@ -41,12 +90,24 @@ function tokenCreation(newToken, email/*user, initialToken, generatedToken, auth
 }
 
 function tokenRenovation(req, res){
-	var initialToken = req.body.initialToken; //Tendría que ser con el authToken
-	var email = req.body.email;
-	var query = { initialToken: initialToken, email: email };
-	var update = moment().add(7, 'd').unix();
+	var token = req.body.generatedToken.replace(/['"]+/g, '');
+	var payload = decodeToken(token);
 
-	Token.findOneAndUpdate(query, {life: update}, (err, data) => {
+	var email = req.body.email;
+	var query = { generatedToken: token, email: email };
+
+	var updateLife = moment().add(7, 'd').unix();
+	var user = {
+		_id: payload._id,
+		typeOfUser: payload.typeOfUser,
+		DP: payload.DP,
+		creation: payload.creation,
+		life: updateLife,
+	};
+	var generatedToken = service_jwt.renovationToken(user); //Guardar token en la base de datos
+	var update = { generatedToken: generatedToken };
+
+	Token.findOneAndUpdate(query, update, (err, data) => {
 		if(err){
 			res.status(500).send({message: 'Error en la petición'});
 		}else{
@@ -54,7 +115,7 @@ function tokenRenovation(req, res){
 				res.status(404).send({message: 'El token o email no existe'});
 			}else{
 				res.status(200).send({
-					token: service_jwt.renovationToken(data)
+					token: generatedToken
 				});
 			}
 		}
@@ -62,18 +123,21 @@ function tokenRenovation(req, res){
 }
 
 function tokenIsValid(req, res){
-	var initialToken = req.body.initialToken;
-	var valid = moment().unix();
-	var bol;
+    var token = req.body.generatedToken.replace(/['"]+/g, '');
+	var payload = decodeToken(token);
 
-	Token.findOne({ initialToken: initialToken }, (err, data) => {
+	var query = { generatedToken: token};
+	var valid = moment().unix();
+
+	var bol;
+	Token.findOne(query, (err, data) => {
 		if(err){
 			res.status(500).send({message: 'Error en la petición'});
 		}else{
 			if(!data){
 				res.status(404).send({message: 'El token no existe'});
 			}else{
-				if(data.life <= valid){
+				if(payload.life <= valid){
 					bol = false;
 					console.log("Token caducado");
 					res.status(200).send({response: bol});
@@ -86,7 +150,15 @@ function tokenIsValid(req, res){
 		}
 	});
 }
+
+function decodeToken(token){
+    var secret = 'secret_key';
+    var payload = jwt.decode(token, secret);
+    return payload;
+}
 //--------------------------------------------New--------------------------------------------
+
+/*
 
 
 function getToday(){
@@ -242,8 +314,11 @@ initializer.whoP=function(token,fn){
 	});
 }
 
+*/
+
 
 module.exports = {
+	authenticate,
 	tokenCreation,
 	tokenRenovation,
 	tokenIsValid

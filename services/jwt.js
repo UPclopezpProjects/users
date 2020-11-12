@@ -7,7 +7,7 @@ var algorithm = 'HS256';
 
 exports.createToken = function(user){
 	var payload = {
-		_id: user._id,
+		_id: user.email.toLowerCase(),
 		typeOfUser: user.typeOfUser,
 		DP: user.dp,
 		creation: moment().unix(), //Momento de creación del token (fecha y hora exacta)
@@ -29,18 +29,16 @@ exports.generateToken = function(user, dp){
 	return jwt.encode(payload, secret, algorithm);
 };
 */
-/*
-exports.renovationToken = function(data){
+exports.renovationToken = function(user){
 	var payload = {
-		userId: data._id,
-		userEmail: data.email,
-		token: data.generateToken,
-		creation: data.creation, //Momento de creación del token (fecha y hora exacta)
-		life: data.life //Cambiar esto para que solo dure mientras esté la sesión
+		_id: user._id,
+		typeOfUser: user.typeOfUser,
+		DP: user.DP,
+		creation: user.creation,
+		life: user.life,
 	};
 	return jwt.encode(payload, secret, algorithm);
 };
-*/
 
 /*
 module.exports = {
