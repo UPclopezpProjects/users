@@ -1,10 +1,27 @@
-extends layout
+doctype html
+head
+  meta(charset='UTF-8')
+  title |Avocado|Login|
+  link(rel='stylesheet' href='public/css/style.css')
+.contenedor-form
+  .toggle
+  .formulario
+    h2 Iniciar sesi&oacute;n
+    form(method='POST' action='/login')
+      input(type='text' placeholder='Usuario' required='true' name='email')
+      input(type='password' placeholder='Contraseña' required='true' name='password')
+      input(type='text' placeholder='token' required='true' name='token')
+      input(type='text' placeholder='typeofoperation' required='true' name='typeofoperation')
+      input(type='text' placeholder='nameofoperation' required='true' name='nameofoperation')
 
-block content
-  div
-    img(class='mb-4' src='/images/avocado.png' alt='' width='144' height='144')
-  form(class='form-signin' action='/exec/authenticate' method='POST') 
-    input(type='email' id='inputEmail' class='form-control' name='email' placeholder='Email address' required autofocus)
-    input(type='password' id='inputPassword' class='form-control' name='password' placeholder='Password' required)
-    button(class='btn btn-lg btn-primary btn-block' type='submit') sig in
-
+      p Tipo de usuario:
+      select(name='typeOfUser')
+        option Administrator
+        option(selected='') Root
+        option TUser
+      br
+      input(type='submit' value='Iniciar Sesión')
+  .reset-password
+    a(href='#') &iquest;Olvidaste tu contrase&ntilde;a?
+script(src='public/js/jquery-3.5.1.min.js')
+script(src='public/js/main.js')

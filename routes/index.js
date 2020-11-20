@@ -1,5 +1,7 @@
+var path = require('path');
 var express = require('express');
 var router = express.Router();
+
 
 //var main = require('../controller/index.js');
 //var modelRoot = require('../controller/modelRoot.js');
@@ -52,6 +54,10 @@ router.post('/exec/permit', sbi.permit);
 
 
 /*----------Pruebas de conexión y obtención de datos----------*/
+
+router.get('/', function(req, res){
+	res.render('index');
+});
 //UserAdministration
 /*router.post('/userCreation', function(req, res){
   UserController.userCreation
@@ -70,6 +76,9 @@ router.put('/userUpdate/:id', UserController.userUpdate);
 router.delete('/userDelete/:id', UserController.userDelete);
 
 //Authentication
+router.get('/login', function(req, res){
+	res.render('login');
+});
 router.post('/login', TokenController.authenticate);
 router.put('/tokenRenovation', TokenController.tokenRenovation);
 router.post('/tokenIsValid', TokenController.tokenIsValid);

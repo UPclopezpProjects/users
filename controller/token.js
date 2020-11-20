@@ -17,6 +17,7 @@ var permit = require("../controller/permit");
 
 //--------------------------------------------New--------------------------------------------
 function authenticate(req, res){
+	console.log(req.body);
     var token = req.headers.token.replace(/['"]+/g, '');
     var payload = decodeToken(token);
     var id = payload._id.toLowerCase();
@@ -49,7 +50,7 @@ function authenticate(req, res){
     					}else{
     						if(typeOfOperationOK == true && user.email == payload._id && req.body.typeOfUser == user.typeOfUser){
     							res.status(200).send({
-    								token: "Entraste"
+    								message: "Entraste"
     							});
     						}else if(typeOfOperationOK == false){
     							res.status(200).send({message: 'No tienes permisos para iniciar sesión'});
@@ -115,7 +116,7 @@ function tokenRenovation(req, res){
 				res.status(404).send({message: 'El token o email no existe'});
 			}else{
 				res.status(200).send({
-					token: generatedToken
+					message: generatedToken
 				});
 			}
 		}
@@ -140,11 +141,11 @@ function tokenIsValid(req, res){
 				if(payload.life <= valid){
 					bol = false;
 					console.log("Token caducado");
-					res.status(200).send({response: bol});
+					res.status(200).send({message: bol});
 				}else{
 					bol = true;
 					console.log("Token vigente");
-					res.status(200).send({response: bol});
+					res.status(200).send({message: bol});
 				}
 			}
 		}

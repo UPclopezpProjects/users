@@ -4,6 +4,7 @@ var User = require("../models/Users");
 var axios = require('axios');
 var bcrypt = require('bcrypt-nodejs');
 var jwt = require('jwt-simple');
+var md5 = require('md5');
 
 var service_jwt = require('../services/jwt');
 var token = require("../controller/token");
@@ -109,6 +110,18 @@ function createRoot(req, res){
             user.addressContract =  auditData.y.addCont;
             user.addressTransaction = auditData.y.addTran;
 
+            //Pruebas con MD5
+            var myJSON = JSON.stringify(req.body);
+            var hashX = md5(myJSON);
+            console.log(hashX);
+            console.log(myJSON);
+
+            if(req.body.hashX == hashX){
+                console.log("MD5 correcto");
+            }else{
+                console.log("MD5 incorrecto");
+            }
+
             if(user.initialToken == auditData.Token){
             //REVISAR SI EXISTE EL TIPO DE OPERACIÓN QUE SE ESTÁ EJECUTANDO
                 if(req.body.password){
@@ -127,7 +140,7 @@ function createRoot(req, res){
                                         var generatedToken = service_jwt.createToken(user); //Guardar token en la base de datos
                                         token.tokenCreation(generatedToken, user.email);
                                         res.status(200).send({
-                                            token: generatedToken
+                                            message: generatedToken
                                         });
                                     }
                                 }
@@ -139,12 +152,10 @@ function createRoot(req, res){
                 }else {
                     res.status(200).send({ message: 'Introduce la contraseña' });
                 }
-            }else if(user.initialToken == auditData.Token){
-                res.status(404).send({ message: 'No tienes permisos para crear usuarios de tipo administrador' });
-            }else{
+            }else if(user.initialToken != auditData.Token){
                 res.status(404).send({ message: 'Errores en los datos initialToken (users) : '+user.initialToken+' - Token (audit): '+auditData.Token });
+                //res.status(404).send({ message: 'No tienes permisos para crear usuarios de tipo administrador' });
             }
-
         }
     });
 }
@@ -190,7 +201,7 @@ function createAdministrator(req, res){
                                         var generatedToken = service_jwt.createToken(user); //Guardar token en la base de datos
                                         token.tokenCreation(generatedToken, user.email);
                                         res.status(200).send({
-                                            token: generatedToken
+                                            message: generatedToken
                                         });
                                     }
                                 }
@@ -255,7 +266,7 @@ function createTUser(req, res){
                                         var generatedToken = service_jwt.createToken(user); //Guardar token en la base de datos
                                         token.tokenCreation(generatedToken, user.email);
                                         res.status(200).send({
-                                            token: generatedToken //Guardar el token
+                                            message: generatedToken //Guardar el token
                                         });
                                     }
                                 }
@@ -282,7 +293,7 @@ function createTUser(req, res){
 Funciones encargada de invocar los servicios RESTful y devolver el objeto JSON correspondiente.
 */
 function serviceInit(req, next) {
-    var key = req.body.key;
+    var key = req.body.addressU;
     var hashX = req.body.hashX;
     var typeOfUser = req.body.typeOfUser;
     var initialToken = req.body.initialToken;
@@ -365,7 +376,7 @@ function updateMe(req, res){
                     res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
                 }else{
                     bool = true;
-                    res.status(200).send({response: bool});
+                    res.status(200).send({message: bool});
                 }
             }
         });
@@ -407,7 +418,7 @@ function updateAdministrator(req, res){
                                 res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
                             }else{
                                 bool = true;
-                                res.status(200).send({response: bool});
+                                res.status(200).send({message: bool});
                             }
                         }
                     });
@@ -450,7 +461,7 @@ function updateTUser(req, res){
                                 res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
                             }else{
                                 bool = true;
-                                res.status(200).send({response: bool});
+                                res.status(200).send({message: bool});
                             }
                         }
                     });
@@ -508,7 +519,7 @@ function deleteMe(req, res){
                     res.status(404).send({message: 'El dato no existe y no ha sido eliminado'});
                 }else{
                     bool = true;
-                    res.status(200).send({response: bool});
+                    res.status(200).send({message: bool});
                 }
             }
         });
@@ -548,7 +559,7 @@ function deleteAdministrator(req, res){
                                 res.status(404).send({message: 'El dato no existe y no ha sido eliminado'});
                             }else{
                                 bool = true;
-                                res.status(200).send({response: bool});
+                                res.status(200).send({message: bool});
                             }
                         }
                     });
@@ -587,7 +598,7 @@ function deleteTUser(req, res){
                                 res.status(404).send({message: 'El dato no existe y no ha sido eliminado'});
                             }else{
                                 bool = true;
-                                res.status(200).send({response: bool});
+                                res.status(200).send({message: bool});
                             }
                         }
                     });

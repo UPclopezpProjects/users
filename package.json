@@ -16,6 +16,7 @@
     "http-errors": "~1.6.3",
     "jwt-simple": "^0.5.6",
     "lodash": "^4.17.20",
+    "md5": "^2.3.0",
     "moment": "^2.29.1",
     "mongodb": "^3.6.0",
     "mongoose": "^5.10.12",
