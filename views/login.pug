@@ -1,19 +1,15 @@
 doctype html
 head
   meta(charset='UTF-8')
-  title |Avocado|Login|
+  title Login
   link(rel='stylesheet' href='public/css/style.css')
 .contenedor-form
   .toggle
   .formulario
     h2 Iniciar sesi&oacute;n
-    form(method='POST' action='/login')
+    form(method='POST')
       input(type='text' placeholder='Usuario' required='true' name='email')
       input(type='password' placeholder='Contraseña' required='true' name='password')
-      input(type='text' placeholder='token' required='true' name='token')
-      input(type='text' placeholder='typeofoperation' required='true' name='typeofoperation')
-      input(type='text' placeholder='nameofoperation' required='true' name='nameofoperation')
-
       p Tipo de usuario:
       select(name='typeOfUser')
         option Administrator

@@ -1,0 +1,123 @@
+doctype html
+head
+  meta(charset='utf-8')
+  title Men&uacute; principal
+  // Favicon
+  link(href='public/img/pics/logo.png' rel='icon' type='image/png')
+  // Fonts
+  link(href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700' rel='stylesheet')
+  // Icons
+  link(href='public/vendor/nucleo/css/nucleo.css' rel='stylesheet')
+  link(href='public/vendor/@fortawesome/fontawesome-free/css/all.min.css' rel='stylesheet')
+  // Argon CSS
+  link(href='public/css/argon.css?v=1.0.0' rel='stylesheet')
+  link(href='public/css/style.css')
+// Sidenav
+nav#sidenav-main.navbar.navbar-vertical.fixed-left.navbar-expand-md.navbar-light.bg-white
+  .container-fluid
+    // Toggler
+    button.navbar-toggler(type='button' data-toggle='collapse' data-target='#sidenav-collapse-main' aria-controls='sidenav-main' aria-expanded='false' aria-label='Toggle navigation')
+      span.navbar-toggler-icon
+    // Brand
+    a.navbar-brand.pt-2(href='./index.html')
+      img.navbar-brand-img(src='public/img/pics/logo.png' alt='...')
+    // Collapse
+    #sidenav-collapse-main.collapse.navbar-collapse
+      // Navigation
+      h6.navbar-heading.text-muted Gestionar datos
+      ul.navbar-nav
+        li.nav-item
+          a.nav-link(href='#')
+            i.ni.ni-single-02.text-red
+            |  Usuarios
+        //
+          <li class="nav-item">
+          <a class="nav-link" href="#" onclick="event.preventDefault(); document.getElementById('formLogout').submit();">
+          <i class="ni ni-key-25"></i> Cerrar sesión
+          </a>
+          <form action="#" method="POST" style="display: none;" id="formLogout">
+          </form>
+          </li>
+// Main content
+.main-content
+  // Top navbar
+  nav#navbar-main.navbar.navbar-top.navbar-expand-md.navbar-dark
+    .container-fluid
+      // Brand
+      a(style='color: #6991AC;') P&aacute;gina principal
+      // Form
+      //
+        <form class="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto">
+        <div class="form-group mb-0">
+        <div class="input-group input-group-alternative">
+        <div class="input-group-prepend">
+        <span class="input-group-text"><i class="fas fa-search"></i></span>
+        </div>
+        <input class="form-control" placeholder="Search" type="text">
+        </div>
+        </div>
+        </form>
+      // User
+      ul.navbar-nav.align-items-center.d-none.d-md-flex
+        li.nav-item.dropdown
+          a.nav-link.pr-0(href='#' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false')
+            .media.align-items-center
+              span.avatar.avatar-sm.rounded-circle
+                i.fa.fa-user
+              .media-body.ml-2.d-none.d-lg-block
+                span.mb-0.text-sm.font-weight-bold(style='color: #000000;') Yo soy root
+          // @include('includes.panel.dropdown_menu')
+          .dropdown-menu.dropdown-menu-arrow.dropdown-menu-right
+            .dropdown-header.noti-title
+              h6.text-overflow.m-0 &iexcl;Bienvenido!
+            a.dropdown-item(href='#')
+              i.ni.ni-support-16
+              span Ayuda
+            .dropdown-divider
+            a.dropdown-item(href='#' onclick="event.preventDefault(); document.getElementById('formLogout').submit();")
+              i.ni.ni-user-run
+              span Cerrar sesi&oacute;n
+  // Header
+  .header.pb-8.pt-4.pt-md-6
+  // Page content
+  .container-fluid.mt--7
+    .row
+      .col-md-12.mb-4
+        .card
+          .card-header Lista
+          .card-body
+            a.btn.btn-secondary.mb-3(href='./AgregarAdmin.html')  Agregar administrador
+            button.btn.btn-outline-info.mb-3 Total: 1
+            a.btn.btn-primary.mb-3(href='#openModal') Auditor&iacute;a
+          .table-responsive
+            table.table.align-items-center.table-flush
+              thead.thead-light
+                tr
+                  th(scope='col') #
+                  th(scope='col') Nombre
+                  th(scope='col') Estado
+                  th(scope='col') Correo
+                  th(scope='col') Fecha de creaci&oacute;n
+                  th(colspan='2') Acciones
+              tbody
+                tr
+                  td 1
+                  td Nombre 1
+                  td Habilitado
+                  td Correo@1.com
+                  td Fecha de creaci&oacute;n 1
+                  td
+                    form(method='POST' role='form' action='')
+                      a.btn.btn-primary.text-black(href='./VerDetalles.html' type='submit') Ver Detalles
+                      a.btn.btn-secondary.text-black(href='./ModificarAdmin.html' type='submit') Modificar
+        .card-footer
+  // @include('includes.panel.footer')
+  footer.footer
+    .row.align-items-center.justify-content-xl-between
+      .col-xl-6
+        .copyright.text-center.text-xl-left.text-muted
+          a.nav-link(target='_blank') &copy; Avocado
+      .col-xl-6
+        ul.nav.nav-footer.justify-content-center.justify-content-xl-end
+          li.nav-item
+            a.nav-link(target='_blank') Acerca de

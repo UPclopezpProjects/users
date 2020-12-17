@@ -1,0 +1,157 @@
+doctype html
+head
+  meta(charset='UTF-8')
+  title |Avocado|Root creation|
+  link(rel='stylesheet' href='public/css/sytileRoot.css')
+.contenedor-form
+  .toggle
+  .formulario
+    h2 Registro
+      br
+      p Correo:
+      input#email(type='text' placeholder='Correo' required='')
+      p Contraseña:
+      input#password(type='password' placeholder='Contraseña' required='')
+      p Tipo de usuario:
+      input#typeOfUser(type='text' placeholder='Root' disabled='true' value='Root')
+      p Token:
+      input#initialToken(type='text' placeholder='Token' required='')
+      p Tipo de operación:
+      input#typeOfOperation(type='text' placeholder='Tipo de operación' required='' value='create')
+      p Nombre de operación:
+      input#nameOfOperation(type='text' placeholder='Nombre de operación' required='' value='createRoot')
+      p AdrressU:
+      input#addressU(type='text' placeholder='AddressU' required='')
+      //Modificar para que agarre el MD5
+      p HashX:
+      input#hashX(type='text' placeholder='HashX' required='' disabled='true')
+      p DP:
+        br
+        label
+        input#data1(type='checkbox' name='Crear usuarios' checked='' disabled='true' value="true")
+        |  createAdministrator
+        label
+        input#data2(type='checkbox' name='Actualizar usuarios' checked='' disabled='true' value="true")
+        |  createTUser
+        br
+        label
+        input#data3(type='checkbox' name='Eliminar usuarios' checked='' disabled='true' value="true")
+        |  updateMe
+        br
+        label
+        input#data4(type='checkbox' name='Crear administrador' checked='' disabled='true' value="true")
+        |  updateAdministrator
+        br
+        label
+        input#data5(type='checkbox' name='Actualizar administrador' checked='' disabled='true' value="true")
+        |  updateTUser
+        br
+        label
+        input#data6(type='checkbox' name='Eliminar administrador' checked='' disabled='true' value="true")
+        |  deleteMe
+        br
+        label
+        input#data7(type='checkbox' name='Configurar perfil' checked='' disabled='true' value="true")
+        |  deleteAdministrator
+        br
+        label
+        input#data8(type='checkbox' name='Configurar perfil' checked='' disabled='true' value="true")
+        |  deleteTUser
+        br
+        label
+        input#data9(type='checkbox' name='Configurar perfil' checked='' disabled='true' value="true")
+        |  readMe
+        br
+        label
+        input#data10(type='checkbox' name='Configurar perfil' checked='' disabled='true' value="true")
+        |  readTUser
+        br
+        label
+        input#data11(type='checkbox' name='Configurar perfil' checked='' disabled='true' value="true")
+        |  readAdministrator
+        br
+        label
+        input#data12(type='checkbox' name='Configurar perfil' checked='' disabled='true' value='true')
+        |  loginUser
+        br
+      input(type='submit' value='Confirmar registro' onclick='MD5()')
+  script(src='public/js/jquery-3.5.1.min.js')
+  script(language='JavaScript' src='services/md5.js')
+  script(src='public/js/main.js')
+  script(language='JavaScript').
+    function MD5(){
+    var e = document.getElementById('email').value;
+    var p = document.getElementById('password').value;
+    var u = document.getElementById('typeOfUser').value;
+    var t = document.getElementById('initialToken').value;
+    var to = document.getElementById('typeOfOperation').value;
+    var no = document.getElementById('nameOfOperation').value;
+    var au = document.getElementById('addressU').value;
+    var h = document.getElementById('data10').value;
+    var dp1 = document.getElementById('data1').value;
+    var dp2 = document.getElementById('data2').value;
+    var dp3 = document.getElementById('data3').value;
+    var dp4 = document.getElementById('data4').value;
+    var dp5 = document.getElementById('data5').value;
+    var dp6 = document.getElementById('data6').value;
+    var dp7 = document.getElementById('data7').value;
+    var dp8 = document.getElementById('data8').value;
+    var dp9 = document.getElementById('data9').value;
+    var dp10 = document.getElementById('data10').value;
+    var dp11 = document.getElementById('data11').value;
+    var dp12 = document.getElementById('data12').value;
+    if(dp1 == "true"){
+      dp1 = true;
+    }
+    if(dp2 == "true"){
+      dp2 = true;
+    }
+    if(dp3 == "true"){
+      dp3 = true;
+    }
+    if(dp4 == "true"){
+      dp4 = true;
+    }
+    if(dp5 == "true"){
+      dp5 = true;
+    }
+    if(dp6 == "true"){
+      dp6 = true;
+    }
+    if(dp7 == "true"){
+      dp7 = true;
+    }
+    if(dp8 == "true"){
+      dp8 = true;
+    }
+    if(dp9 == "true"){
+      dp9 = true;
+    }
+    if(dp10 == "true"){
+      dp10 = true;
+    }
+    if(dp11 == "true"){
+      dp11 = true;
+    }
+    if(dp12 == "true"){
+      dp12 = true;
+    }
+
+    var myJSON = {
+      email: e,
+      password: p,
+      typeOfUser: u,
+      initialToken: t,
+      typeOfOperation: to,
+      nameOfOperation: no,
+      addressU: au,
+      dp: {
+        "createAdministrator": dp1, "createTUser": dp2, "updateMe": dp3, "updateAdministrator": dp4, "updateTUser": dp5, "deleteMe": dp6, "deleteAdministrator": dp7, "deleteTUser": dp8, "readMe": dp9, "readTUser": dp10, "readAdministrator": dp11, "loginUser": dp12
+      }
+    };
+    myData = JSON.stringify(myJSON);
+    var hashX =  (myData);
+    console.log(myData);
+    console.log(hashX);
+    document.getElementById('hashX').value = hashX;
+    }

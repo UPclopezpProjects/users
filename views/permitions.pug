@@ -1,0 +1,11 @@
+doctype html
+form(method='POST')
+  div#t(type='text' placeholder='Usuario' required='true' name='token')
+script.
+  if (typeof(Storage) !== 'undefined') {
+  //localStorage.getItem('Token');;
+  // Retrieve
+  document.getElementById("t").innerHTML = localStorage.getItem("Token");
+  } else {
+  console.log("No compatible");
+  }

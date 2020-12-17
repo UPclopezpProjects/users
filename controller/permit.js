@@ -5,38 +5,6 @@ var Dictionary = require("../models/Transactions");
 var jwt = require('jwt-simple');
 var moment = require('moment');
 
-function permissAccesTo(payload, typeOfOperation, nameOfOperation, next){
-	var query = { typeOfOperation: typeOfOperation, nameOfOperation: nameOfOperation};
-	var userPermition;
-	var transaction;
-	Dictionary.findOne(query, (err, transactionStored) => {
-		if(err){
-			transaction = null;
-			next(null, err);
-		}else{
-			if(!transactionStored){
-				transaction = 'message: El dato no existe';
-				next(transaction, null);
-			}else{
-				var permitionArray = transactionStored.permitAccessTo;
-				var permitionJSON = JSON.parse(permitionArray);
-				var userType = payload.typeOfUser;
-				if(userType == 'Root'){
-					userPermition = permitionJSON.Root;
-				}else if(userType == 'Administrator'){
-					userPermition = permitionJSON.Administrator;
-				}else if(userType == 'TUser'){
-					userPermition = permitionJSON.TUser;
-				}else{
-					return 'message: No existe este tipo de usuario';
-				}
-				next(userPermition, null);
-			}
-		}
-	});
-}
-
-
 function decodeToken(token){
     var secret = 'secret_key';
     var payload = jwt.decode(token, secret);
@@ -45,29 +13,46 @@ function decodeToken(token){
 
 function hasAccess(token, typeOfOperation, nameOfOperation){
 	var token = token.replace(/['"]+/g, '');
+	//console.log(token);
 	var payload = decodeToken(token);
+	var dpArray = payload.DP;
+	var dpJSON = JSON.parse(dpArray);
 	var typeOfOperationOK = null;
+	var userPermition = null;
 
-	permissAccesTo(payload, typeOfOperation, nameOfOperation, function(data, err) {
-		if (err) {
-			return 'message: Error en la petición';
-        }else {
-        	var dpArray = payload.DP;
-		    var dpJSON = JSON.parse(dpArray);
+	if(token == null || token == undefined || token == ''){
+		return 'message: La petición no tiene la cabecera';
+	}
+	try{
+		if(payload.life <= moment().unix()){
+			return 'message: El token ha expirado';
+		}
+	}catch(ex){
+		console.log("Ex: "+ex);
+		return 'message: Token no válido';
+	}
 
-		    if(token == null || token == undefined || token == ''){
-		        return 'message: La petición no tiene la cabecera';
-		    }
-		    try{
-		        if(payload.life <= moment().unix()){
-		        	return 'message: El token ha expirado';
-		        }
-		    }catch(ex){
-		        console.log("Ex: "+ex);
-		        return 'message: Token no válido';
-		    }
-		    console.log(data);
-		    if(data == true){
+	var query = { typeOfOperation: typeOfOperation, nameOfOperation: nameOfOperation};
+	return new Promise(function(resolve, reject) {
+		Dictionary.findOne(query)
+		.then(transactionStored => {
+			var permitionArray = transactionStored.permitAccessTo;
+			var permitionJSON = JSON.parse(permitionArray);
+			var userType = payload.typeOfUser;
+
+			if(userType == 'Root'){
+				userPermition = permitionJSON.Root;
+			}else if(userType == 'Administrator'){
+				userPermition = permitionJSON.Administrator;
+			}else if(userType == 'TUser'){
+				userPermition = permitionJSON.TUser;
+			}else{
+				return 'message: No existe este tipo de usuario';
+			}
+			return userPermition;
+	    })
+	    .then(data => {
+			if(data == true){
 		    	switch(typeOfOperation) {
 			        case 'create':
 			        	if(nameOfOperation == 'createRoot'){
@@ -117,13 +102,19 @@ function hasAccess(token, typeOfOperation, nameOfOperation){
 			}else if (data == false){
 				typeOfOperationOK = false;
 			}
-        }
-        console.log(typeOfOperationOK);
-        return typeOfOperationOK;
-    });
+			resolve(typeOfOperationOK);
+		})
+	    .then(undefined, function(err){
+	    	reject(err);
+	    })
+	    .catch(err => {
+	    	console.log(err);
+	    	return res.status(505).json({message: "Error 505"});
+	    });
+	});
 }
 
-function permitions(req, res){
+/*function permitions(req, res){
     var email = req.body.email;
     User.findOne( {email: email.toLowerCase() }, (err, user) => {
         if(err){
@@ -137,6 +128,39 @@ function permitions(req, res){
                 res.status(200).send({ permitions: dpJSON });
             }
         }
+    });
+}*/
+function permitions(req, res){
+	/*var email = req.body.email;
+	let promise = new Promise(function(resolve, reject) {
+		User.findOne({email: email})
+		.then(user => {
+			var dpArray = user.dp;
+			var dpJSON = JSON.parse(dpArray);
+			resolve(dpJSON)
+	    })
+	    .then(undefined, function(err){
+	    	reject(err)
+	    });
+	});
+
+	promise
+		.then(data => {
+			res.status(200).send({ message: data });
+		})
+		*/
+	var tokeninitial = req.body.token;
+    var typeOfOperation = req.body.typeOfOperation;
+    var nameOfOperation = req.body.nameOfOperation;
+    hasAccess(tokeninitial, typeOfOperation, nameOfOperation)
+    .then(typeOfOperationOK => {
+    	console.log(typeOfOperationOK);
+        return res.status(200).send({message: typeOfOperationOK});
+    })
+    .catch(err => {
+        // never goes here
+        console.log(err);
+        return res.status(550).json(err);
     });
 }
 module.exports = {

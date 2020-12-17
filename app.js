@@ -10,6 +10,8 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var session = require('express-session');
+var cors = require('cors');
+
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -23,6 +25,8 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
 app.use('/public', express.static(__dirname + '/public'));
+app.use('/services', express.static(__dirname + '/services'));
+
 
 
 app.use(logger('dev'));
@@ -36,6 +40,16 @@ app.use(session({
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Configurar cabeceras y cors
+app.use(cors());
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+    res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
+    next();
+});
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
@@ -54,13 +68,13 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  var resp = {result:"error de users - :C"};
+  var resp = {message:"error de users - :C"};
   res.send(resp);
   //res.render('error');
 });
 
 var mongoose = require('mongoose');
-var mongoDB = 'mongodb://172.17.0.1:27017/users';
+var mongoDB = 'mongodb://172.20.0.4:27017/users';
 
 var port = process.env.PORT || 3001;
 

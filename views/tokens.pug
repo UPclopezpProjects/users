@@ -1,0 +1,17 @@
+doctype html
+form(method='POST')
+  input#t(type='text' placeholder='Usuario' required='true' name='token')
+  input(type='hidden' value='authentication' name='typeofoperation' readonly='true')
+  input(type='hidden' value='loginUser' name='nameofoperation' readonly='true')
+  input(type='submit' value='Confirmar' onclick='clickCounter()')
+script.
+  function clickCounter() {
+  var token = document.getElementById("t").value;
+  if (typeof(Storage) !== 'undefined') {
+  // Código cuando Storage es compatible
+  localStorage.setItem('Token', token);
+  console.log("Almacenado", token);
+  } else {
+  console.log("No compatible");
+  }
+  }

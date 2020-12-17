@@ -8,7 +8,7 @@ var bcrypt = require('bcrypt-nodejs');
 
 
 var service_jwt = require('../services/jwt');
-var permit = require("../controller/permit");
+var permit = require("./permit");
 //
 
 //var User = require("../models/Users");
@@ -18,57 +18,40 @@ var permit = require("../controller/permit");
 //--------------------------------------------New--------------------------------------------
 function authenticate(req, res){
 	console.log(req.body);
-    var token = req.headers.token.replace(/['"]+/g, '');
-    var payload = decodeToken(token);
-    var id = payload._id.toLowerCase();
-
     var email = req.body.email;
     var password = req.body.password;
     var typeOfUser = req.body.typeOfUser; //FALTA CHECAR ESTO
 
-    var tokeninitial = req.headers.token;
-    var typeOfOperation = req.headers.typeofoperation;
-    var nameOfOperation = req.headers.nameofoperation;
-    var typeOfOperationOK = permit.hasAccess(tokeninitial, typeOfOperation, nameOfOperation);
-
-    var query = {email: email};
-    //Modificar
-    User.findOne(query, (err, user) => {
-    	if(err){
-    		res.status(500).send({message: 'Error en la petición'});
-    	}else{
-    		if(!user){
-    			res.status(404).send({message: 'El usuario no existe'});
-    		}else{
-    			//Comprobar la contraseña
-    			bcrypt.compare(password, user.password, function(err, check){
-    				if(check){
-    					//Duvuelve los datos del usuario logueado
-    					if(req.body.gethash){
-    						//Delvover un token de JWT
-    						console.log("ERROR");
-    					}else{
-    						if(typeOfOperationOK == true && user.email == payload._id && req.body.typeOfUser == user.typeOfUser){
-    							res.status(200).send({
-    								message: "Entraste"
-    							});
-    						}else if(typeOfOperationOK == false){
-    							res.status(200).send({message: 'No tienes permisos para iniciar sesión'});
-    						}else if(user.email != payload._id){
-    							res.status(200).send({message: 'Los ID´s no coinciden'});
-    						}else if(req.body.typeOfUser != user.typeOfUser){
-    							res.status(200).send({message: 'El tipo de usuario -'+req.body.typeOfUser+'- no coincide con el tipo de usuario -'+user.typeOfUser+'-'});
-    						}else{
-    							res.status(200).send({message: 'Existen errores al loguearse'});
-    						}
-    					}
-    				}else{
-    					res.status(404).send({message: 'El usuario no se ha podido indentificar'});
-    				}
-    			})
-    		}
-    	}
-    });
+    var query = {email: email, typeOfUser: typeOfUser};
+    if(req.body.email != '' && req.body.password != ''){
+    	//Modificar
+	    User.findOne(query, (err, user) => {
+	    	if(err){
+	    		res.status(500).send({message: 'Error en la petición'});
+	    	}else{
+	    		if(!user){
+	    			res.status(404).send({message: 'El usuario no existe'});
+	    		}else{
+	    			//Comprobar la contraseña
+	    			bcrypt.compare(password, user.password, function(err, check){
+	    				if(check){
+	    					//Duvuelve los datos del usuario logueado
+	    					if(req.body.gethash){
+	    						//Delvover un token de JWT
+	    						console.log("ERROR");
+	    					}else{
+	    						res.status(200).send({message: true, user: user});
+	    					}
+	    				}else{
+	    					res.status(404).send({message: 'El usuario no se ha podido indentificar'});
+	    				}
+	    			})
+	    		}
+	    	}
+	    });
+	}else{
+		res.status(404).json({ message: 'Rellena todos los campos' });
+	}
 }
 
 function tokenCreation(newToken, email){
@@ -127,7 +110,7 @@ function tokenIsValid(req, res){
     var token = req.body.generatedToken.replace(/['"]+/g, '');
 	var payload = decodeToken(token);
 
-	var query = { generatedToken: token};
+	var query = { generatedToken: token };
 	var valid = moment().unix();
 
 	var bol;
@@ -152,10 +135,69 @@ function tokenIsValid(req, res){
 	});
 }
 
+function checkTokens(req, res){
+	var token = req.body.token.replace(/['"]+/g, '');
+	if(!req.body.token){
+		return res.status(300).json({message: "Rellena el campo"});
+	}
+	var payload = decodeToken(token);
+	//console.log(payload);
+	var valid = moment().unix();
+	var typeOfOperation = req.body.typeOfOperation;;
+	var nameOfOperation = req.body.nameOfOperation;
+	var email = req.body.email;
+    var query = {};
+
+	permit.hasAccess(token, typeOfOperation, nameOfOperation)
+	.then(typeOfOperationOK => {
+		//console.log('typeOfOperationOK: '+typeOfOperationOK);
+		if(payload.life <= valid){
+			return res.status(200).json({message: "Caducado"});
+		}else{
+			//localStorage.setItem('currentUser', JSON.stringify({ token: token, email: payload.email }));
+			Token.findOne({ generatedToken: token, email: email })
+				.then(tokenStored => {
+					return tokenStored;
+	        	})
+	        	.then(token => {
+	        		//console.log("token1: "+token);
+	        		//console.log("token2: "+JSON.stringify(token));
+	        		var userType = payload.typeOfUser;
+	        		if(token == 'null' || token == null || token == "null"){
+						return res.status(404).json({
+							message: null
+						});
+					}else if(typeOfOperationOK == true){
+						return res.status(200).json({
+							message: true //Guardar el token
+						});
+					}else if(typeOfOperationOK == false){
+						return res.status(404).json({
+							message: false
+						});
+					}
+	        	})
+	        	.catch(err => {
+					console.log(err);
+					return res.status(505).json({message: "Error 505"});
+				});
+		}
+	})
+	.catch(err => {
+		// never goes here
+		console.log(err);
+		return res.status(505).json({message: "Error 505"});
+	});
+}
+
 function decodeToken(token){
     var secret = 'secret_key';
     var payload = jwt.decode(token, secret);
     return payload;
+}
+
+function verifyToken(token){
+
 }
 //--------------------------------------------New--------------------------------------------
 
@@ -320,6 +362,7 @@ initializer.whoP=function(token,fn){
 
 module.exports = {
 	authenticate,
+	checkTokens,
 	tokenCreation,
 	tokenRenovation,
 	tokenIsValid

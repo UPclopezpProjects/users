@@ -71,21 +71,24 @@ router.delete('/userDelete/:id', function(req, res){
 router.post('/login', function(req, res){
   UserController.loginUser
 });*/
+router.get('/userDetails/:id', UserController.getUser);
+router.get('/usersDetails/:page?', UserController.getUsers);
 router.post('/userCreation', UserController.userCreate);
 router.put('/userUpdate/:id', UserController.userUpdate);
 router.delete('/userDelete/:id', UserController.userDelete);
 
 //Authentication
-router.get('/login', function(req, res){
-	res.render('login');
-});
 router.post('/login', TokenController.authenticate);
+router.post('/login/token', TokenController.checkTokens);
 router.put('/tokenRenovation', TokenController.tokenRenovation);
 router.post('/tokenIsValid', TokenController.tokenIsValid);
 
 
 
 //Permit
+/*router.get('/permitions', function(req, res){
+	res.render('permitions');
+});*/
 router.get('/permitions', PermitController.permitions);
 
 /*----------Pruebas de conexión y obtención de datos----------*/
