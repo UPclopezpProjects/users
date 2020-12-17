@@ -114,54 +114,40 @@ function hasAccess(token, typeOfOperation, nameOfOperation){
 	});
 }
 
-/*function permitions(req, res){
-    var email = req.body.email;
-    User.findOne( {email: email.toLowerCase() }, (err, user) => {
-        if(err){
-            res.status(500).send({ message: 'Error en la petición' });
-        }else{
-            if(!user){
-                res.status(404).send({ message: 'El usuario no existe' });
-            }else{
-                var dpArray = user.dp;
-                var dpJSON = JSON.parse(dpArray);
-                res.status(200).send({ permitions: dpJSON });
-            }
-        }
-    });
-}*/
+/*
 function permitions(req, res){
-	/*var email = req.body.email;
+	var email = req.body.email;
 	let promise = new Promise(function(resolve, reject) {
 		User.findOne({email: email})
 		.then(user => {
 			var dpArray = user.dp;
 			var dpJSON = JSON.parse(dpArray);
 			resolve(dpJSON)
-	    })
-	    .then(undefined, function(err){
-	    	reject(err)
-	    });
+		})
+		.then(undefined, function(err){
+			reject(err)
+		});
 	});
 
 	promise
 		.then(data => {
 			res.status(200).send({ message: data });
 		})
-		*/
+}
+*/
+function permitions(req, res){
 	var tokeninitial = req.body.token;
-    var typeOfOperation = req.body.typeOfOperation;
-    var nameOfOperation = req.body.nameOfOperation;
-    hasAccess(tokeninitial, typeOfOperation, nameOfOperation)
-    .then(typeOfOperationOK => {
-    	console.log(typeOfOperationOK);
-        return res.status(200).send({message: typeOfOperationOK});
-    })
-    .catch(err => {
-        // never goes here
-        console.log(err);
-        return res.status(550).json(err);
-    });
+	var typeOfOperation = req.body.typeOfOperation;
+	var nameOfOperation = req.body.nameOfOperation;
+	hasAccess(tokeninitial, typeOfOperation, nameOfOperation)
+	.then(typeOfOperationOK => {
+		console.log(typeOfOperationOK);
+		return res.status(200).send({message: typeOfOperationOK});
+	})
+	.catch(err => {
+		console.log(err);
+		return res.status(550).json(err);
+	});
 }
 module.exports = {
 	hasAccess,
