@@ -1,7 +1,7 @@
 //
-global.host = '172.20.0.2';
+global.host = '172.20.0.3';
 global.port = '3000';
-global.path = '/exec/createUser';
+global.path = '/exec/createUserSC';
 //
 
 var createError = require('http-errors');
@@ -74,7 +74,7 @@ app.use(function(err, req, res, next) {
 });
 
 var mongoose = require('mongoose');
-var mongoDB = 'mongodb://172.20.0.4:27017/users';
+var mongoDB = 'mongodb://172.18.0.2:27017/users';
 
 var port = process.env.PORT || 3001;
 
