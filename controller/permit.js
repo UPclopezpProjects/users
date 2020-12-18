@@ -1,21 +1,24 @@
 var User = require("../models/Users");
 var Dictionary = require("../models/Transactions");
 
+var service_jwt = require('../services/jwt');
 
-var jwt = require('jwt-simple');
 var moment = require('moment');
 
-function decodeToken(token){
-    var secret = 'secret_key';
-    var payload = jwt.decode(token, secret);
-    return payload;
-}
+
+
+
 
 function hasAccess(token, typeOfOperation, nameOfOperation){
 	var token = token.replace(/['"]+/g, '');
 	//console.log(token);
-	var payload = decodeToken(token);
+	var payload = service_jwt.decodeToken(token);
 	var dpArray = payload.DP;
+	var userType = payload.typeOfUser;
+
+	//console.log(payload);
+	//console.log(dpArray);
+
 	var dpJSON = JSON.parse(dpArray);
 	var typeOfOperationOK = null;
 	var userPermition = null;
@@ -38,8 +41,6 @@ function hasAccess(token, typeOfOperation, nameOfOperation){
 		.then(transactionStored => {
 			var permitionArray = transactionStored.permitAccessTo;
 			var permitionJSON = JSON.parse(permitionArray);
-			var userType = payload.typeOfUser;
-
 			if(userType == 'Root'){
 				userPermition = permitionJSON.Root;
 			}else if(userType == 'Administrator'){
@@ -55,12 +56,15 @@ function hasAccess(token, typeOfOperation, nameOfOperation){
 			if(data == true){
 		    	switch(typeOfOperation) {
 			        case 'create':
-			        	if(nameOfOperation == 'createRoot'){
+			        	if(nameOfOperation == 'createRoot' && userType == 'Root'){
 			                typeOfOperationOK = true; //Se envía true por defecto ya que es la única vez que se podrá crear un usario Root
-			            } else if(nameOfOperation == 'createAdministrator'){
+			            }else if(nameOfOperation == 'createAdministrator'){
 			                typeOfOperationOK = dpJSON.createAdministrator;
 			            }else if(nameOfOperation == 'createTUser'){
 			                typeOfOperationOK = dpJSON.createTUser;
+			            }else{
+			            	console.log("Caso por defecto en create");
+			            	typeOfOperationOK = false;
 			            }
 			        	break;
 			        case 'read':
@@ -70,6 +74,8 @@ function hasAccess(token, typeOfOperation, nameOfOperation){
 			                typeOfOperationOK = dpJSON.readAdministrator;
 			            }else if(nameOfOperation == 'readTUser') {
 			                typeOfOperationOK = dpJSON.readTUser;
+			            }else{
+			            	console.log("Caso por defecto en read");
 			            }
 			        	break;
 			        case 'update':
@@ -79,6 +85,8 @@ function hasAccess(token, typeOfOperation, nameOfOperation){
 			                typeOfOperationOK = dpJSON.updateAdministrator;
 			            }else if(nameOfOperation == 'updateTUser'){
 			                typeOfOperationOK = dpJSON.updateTUser;
+			            }else{
+			            	console.log("Caso por defecto en update");
 			            }
 			            break;
 			        case 'delete':
@@ -88,11 +96,15 @@ function hasAccess(token, typeOfOperation, nameOfOperation){
 			                typeOfOperationOK = dpJSON.deleteAdministrator;
 			            }else if(nameOfOperation == 'deleteTUser'){
 			                typeOfOperationOK = dpJSON.deleteTUser;
+			            }else{
+			            	console.log("Caso por defecto en delete");
 			            }
 			            break;
 			        case 'authentication':
 			            if(nameOfOperation == 'loginUser') {
 			                typeOfOperationOK = dpJSON.loginUser;
+			            }else{
+			            	console.log("Caso por defecto en authentication");
 			            }
 			            break;
 			        default:
@@ -141,7 +153,7 @@ function permitions(req, res){
 	var nameOfOperation = req.body.nameOfOperation;
 	hasAccess(tokeninitial, typeOfOperation, nameOfOperation)
 	.then(typeOfOperationOK => {
-		console.log(typeOfOperationOK);
+		//console.log(typeOfOperationOK);
 		return res.status(200).send({message: typeOfOperationOK});
 	})
 	.catch(err => {

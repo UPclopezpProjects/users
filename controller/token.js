@@ -40,7 +40,8 @@ function authenticate(req, res){
 	    						//Delvover un token de JWT
 	    						console.log("ERROR");
 	    					}else{
-	    						res.status(200).send({message: true, user: user});
+	    						var initialToken = service_jwt.createToken(user);
+	    						res.status(200).send({ message: true, user: user });
 	    					}
 	    				}else{
 	    					res.status(404).send({message: 'El usuario no se ha podido indentificar'});
@@ -169,7 +170,7 @@ function checkTokens(req, res){
 						});
 					}else if(typeOfOperationOK == true){
 						return res.status(200).json({
-							message: true //Guardar el token
+							message: true
 						});
 					}else if(typeOfOperationOK == false){
 						return res.status(404).json({

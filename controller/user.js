@@ -13,6 +13,8 @@ var token = require("./token");
 var permit = require("./permit");
 //
 
+
+
 /*var errResulUtils = require("../controller/errResulUtils");
 
 var initializer = {};
@@ -97,7 +99,8 @@ function checkEmail(req, res, typeOfUser){
 }
 
 function createRoot(req, res){
-    serviceInit(req, function(data, err) {
+    var initialToken = service_jwt.createToken(req.body);
+    serviceInit(req, initialToken, function(data, err) {
         if (err) {
             res.status(500).send({ message: 'Error en la petición' });
         }else {
@@ -106,11 +109,12 @@ function createRoot(req, res){
 
             user.email = req.body.email;
             user.typeOfUser = req.body.typeOfUser;
-            user.initialToken = req.body.initialToken;
+            user.initialToken = initialToken;
             user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
             user.addressU = req.body.addressU;
             user.addressContract =  auditData.addCont;
             user.addressTransaction = auditData.addTran;
+
 
             //Pruebas con MD5
             var jsonData = {
@@ -145,14 +149,15 @@ function createRoot(req, res){
                                     if(!userStored) {
                                         res.status(404).send({ message: 'El dato no ha sido guardado' });
                                     }else{
-                                        var generatedToken = service_jwt.createToken(user); //Guardar token en la base de datos
-                                        token.tokenCreation(generatedToken, user.email);
+                                        //var generatedToken = service_jwt.createToken(user); //Guardar token en la base de datos
+                                        token.tokenCreation(user.initialToken, user.email); //Guarda token en la base de datos
                                         /*res.status(200).send({
                                             message: userStored
                                         });*/
+                                        token.authenticate(req, res);
                                         res.status(200).send({
                                             user: userStored,
-                                            token: generatedToken
+                                            token: initialToken
                                         });
                                     }
                                 }
@@ -175,7 +180,7 @@ function createRoot(req, res){
 }
 
 function createAdministrator(req, res){
-    serviceInit(req, function(data, err) {
+    serviceInit(req, req.headers.authorization, function(data, err) {
         if (err) {
             res.status(500).send({ message: 'Error en la petición' });
         }else {
@@ -249,7 +254,7 @@ function createAdministrator(req, res){
                     }else if(typeOfOperationOK != true){
                         return res.status(404).json({ message: 'No tienes permisos' });
                     }else if(req.body.hashX != hashX){
-                        return res.status(404).json({ message: 'HashX no coincide' });
+                        return res.status(404).json({ message: 'HashX no coincide: '+hashX });
                     }else{
                         return res.status(404).json({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - initialToken (users): '+user.initialToken+' - Token (audit): '+auditData.Token+' - hashX (client): '+req.body.hashX+' - hashX(api): '+hashX });
                     }
@@ -264,7 +269,7 @@ function createAdministrator(req, res){
 }
 
 function createTUser(req, res){
-    serviceInit(req, function(data, err) {
+    serviceInit(req, req.headers.authorization, function(data, err) {
         if (err) {
             res.status(500).send({ message: 'Error en la petición' });
         }else {
@@ -338,7 +343,7 @@ function createTUser(req, res){
                     }else if(typeOfOperationOK != true){
                         return res.status(404).json({ message: 'No tienes permisos' });
                     }else if(req.body.hashX != hashX){
-                        return res.status(404).json({ message: 'HashX no coincide' });
+                        return res.status(404).json({ message: 'HashX no coincide: '+hashX });
                     }else{
                         return res.status(404).json({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - initialToken (users): '+user.initialToken+' - Token (audit): '+auditData.Token+' - hashX (client): '+req.body.hashX+' - hashX(api): '+hashX });
                     }
@@ -355,11 +360,11 @@ function createTUser(req, res){
 /*
 Funciones encargada de invocar los servicios RESTful y devolver el objeto JSON correspondiente.
 */
-function serviceInit(req, next) {
+function serviceInit(req, initialToken, next) {
     var key = req.body.addressU;
     var hashX = req.body.hashX;
     var typeOfUser = req.body.typeOfUser;
-    var initialToken = req.body.initialToken;
+    var initialToken = initialToken;
     var typeOfOperation = req.body.typeOfOperation;
     var data;
     var url = 'http://'+host+':'+port+''+path+'';
@@ -379,12 +384,6 @@ function serviceInit(req, next) {
         console.log(error);
         next(null, error);
     });
-}
-
-function decodeToken(token){
-    var secret = 'secret_key';
-    var payload = jwt.decode(token, secret);
-    return payload;
 }
 
 function userUpdate(req, res) {
@@ -424,7 +423,8 @@ function updateMe(req, res){
     permit.hasAccess(tokeninitial, typeOfOperation, nameOfOperation)
     .then(typeOfOperationOK => {
         tokeninitial.replace(/['"]+/g, '');
-        var payload = decodeToken(tokeninitial);
+        //var payload = decodeToken(tokeninitial);
+        var payload = service_jwt.decodeToken(tokeninitial);
         var id = req.params.id.toLowerCase(); //CAMBIAR ESTE DATO POR LA VARIABLE QUE CONTENDRÁ LOS ID's DE LOS USUARIOS REGISTRADOS
         var bool = false;
         var jsonData = {
@@ -685,7 +685,8 @@ function deleteMe(req, res){
         console.log(typeOfOperationOK);
 
         tokeninitial.replace(/['"]+/g, '');
-        var payload = decodeToken(tokeninitial);
+        //var payload = decodeToken(tokeninitial);
+        var payload = service_jwt.decodeToken(tokeninitial);
         var id = req.params.id.toLowerCase(); //CAMBIAR ESTE DATO POR LA VARIABLE QUE CONTENDRÁ LOS ID's DE LOS USUARIOS REGISTRADOS
         var bool = false;
         if(typeOfOperationOK == true && id == payload._id && !req.body.email){

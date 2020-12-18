@@ -5,7 +5,7 @@ var algorithm = 'HS256';
 //var algorithm = 'HS384';
 
 
-exports.createToken = function(user){
+function createToken(user){
 	var payload = {
 		_id: user.email.toLowerCase(),
 		typeOfUser: user.typeOfUser,
@@ -29,7 +29,7 @@ exports.generateToken = function(user, dp){
 	return jwt.encode(payload, secret, algorithm);
 };
 */
-exports.renovationToken = function(user){
+function renovationToken(user){
 	var payload = {
 		_id: user._id,
 		typeOfUser: user.typeOfUser,
@@ -40,10 +40,15 @@ exports.renovationToken = function(user){
 	return jwt.encode(payload, secret, algorithm);
 };
 
-/*
+function decodeToken(token){
+    var secret = 'secret_key';
+    var payload = jwt.decode(token, secret);
+    return payload;
+}
+
+
 module.exports = {
 	createToken,
-	generateToken,
-	renovationToken
+	renovationToken,
+	decodeToken
 };
-*/
