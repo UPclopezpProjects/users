@@ -8,7 +8,6 @@ var md5 = require('md5');
 var mongoosePaginate = require('mongoose-pagination');
 //var mongoosePaginatee = require('mongoose-paginate-v2');
 
-
 var service_jwt = require('../services/jwt');
 var token = require("./token");
 var permit = require("./permit");
@@ -98,7 +97,6 @@ function checkEmail(req, res, typeOfUser){
 }
 
 function createRoot(req, res){
-
     serviceInit(req, function(data, err) {
         if (err) {
             res.status(500).send({ message: 'Error en la petición' });
@@ -111,8 +109,8 @@ function createRoot(req, res){
             user.initialToken = req.body.initialToken;
             user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
             user.addressU = req.body.addressU;
-            user.addressContract =  auditData.y.addCont;
-            user.addressTransaction = auditData.y.addTran;
+            user.addressContract =  auditData.addCont;
+            user.addressTransaction = auditData.addTran;
 
             //Pruebas con MD5
             var jsonData = {
@@ -189,8 +187,8 @@ function createAdministrator(req, res){
             user.initialToken = req.body.initialToken;
             user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
             user.addressU = req.body.addressU;
-            user.addressContract =  auditData.y.addCont;
-            user.addressTransaction = auditData.y.addTran;
+            user.addressContract =  auditData.addCont;
+            user.addressTransaction = auditData.addTran;
 
             //var key = req.body.key; //REVISAR
             //var hashX = req.body.hashX; //REVISAR
@@ -278,8 +276,8 @@ function createTUser(req, res){
             user.initialToken = req.body.initialToken;
             user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
             user.addressU = req.body.addressU;
-            user.addressContract =  auditData.y.addCont;
-            user.addressTransaction = auditData.y.addTran;
+            user.addressContract =  auditData.addCont;
+            user.addressTransaction = auditData.addTran;
 
             //var key = req.body.key; //REVISAR
             //var hashX = req.body.hashX; //REVISAR

@@ -1,5 +1,5 @@
 //
-global.host = '172.20.0.3';
+global.host = 'host.docker.internal'; //host.docker.internal
 global.port = '3000';
 global.path = '/exec/createUserSC';
 //
@@ -12,13 +12,10 @@ var logger = require('morgan');
 var session = require('express-session');
 var cors = require('cors');
 
-
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
 var app = express();
-
-
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -26,8 +23,6 @@ app.set('view engine', 'pug');
 
 app.use('/public', express.static(__dirname + '/public'));
 app.use('/services', express.static(__dirname + '/services'));
-
-
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -59,7 +54,6 @@ app.use(function(req, res, next) {
   next(createError(404));
 });
 
-
 // error handler
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
@@ -74,7 +68,7 @@ app.use(function(err, req, res, next) {
 });
 
 var mongoose = require('mongoose');
-var mongoDB = 'mongodb://172.18.0.2:27017/users';
+var mongoDB = 'mongodb://host.docker.internal:27017/users';
 
 var port = process.env.PORT || 3001;
 
