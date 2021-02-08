@@ -1,7 +1,13 @@
 //
 global.host = 'host.docker.internal'; //host.docker.internal
-global.port = '3000';
-global.path = '/exec/createUserSC';
+global.port = {
+  audit: '3000',
+  merchant: '3002'
+};
+global.path = {
+  audit: '/exec/createUserSC',
+  merchant: '/data'
+};
 //
 
 var createError = require('http-errors');

@@ -5,10 +5,6 @@ var service_jwt = require('../services/jwt');
 
 var moment = require('moment');
 
-
-
-
-
 function hasAccess(token, typeOfOperation, nameOfOperation){
 	var token = token.replace(/['"]+/g, '');
 	//console.log(token);
@@ -39,13 +35,14 @@ function hasAccess(token, typeOfOperation, nameOfOperation){
 	return new Promise(function(resolve, reject) {
 		Dictionary.findOne(query)
 		.then(transactionStored => {
+			console.log(transactionStored);
 			var permitionArray = transactionStored.permitAccessTo;
 			var permitionJSON = JSON.parse(permitionArray);
 			if(userType == 'Root'){
 				userPermition = permitionJSON.Root;
 			}else if(userType == 'Administrator'){
 				userPermition = permitionJSON.Administrator;
-			}else if(userType == 'TUser'){
+			}else if(userType == 'TUser' || userType == 'Merchant' || userType == 'Carrier' || userType == 'Acopio' || userType == 'Productor'){ //Se acumulan los tipos de usuarios
 				userPermition = permitionJSON.TUser;
 			}else{
 				return 'message: No existe este tipo de usuario';

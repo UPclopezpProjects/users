@@ -44,13 +44,16 @@ initializer.save = function (req,addrC,addrT, statusp,resp,who) {
 //--------------------------------------------New--------------------------------------------
 function userCreate(req, res) {
     var typeOfUser = req.body.typeOfUser;
-
     switch(typeOfUser.toLowerCase()){
         case "root":
             checkRoot(req, res);
             break;
         case "administrator":
         case "tuser":
+        case "merchant":
+        case "carrier":
+        case "acopio":
+        case "productor":
             checkEmail(req, res, typeOfUser);
             break;
         default:
@@ -85,6 +88,10 @@ function checkEmail(req, res, typeOfUser){
                         createAdministrator(req, res);
                         break;
                     case "tuser":
+                    case "merchant":
+                    case "carrier":
+                    case "acopio":
+                    case "productor":
                         createTUser(req, res);
                         break;
                     default:
@@ -114,6 +121,9 @@ function createRoot(req, res){
             user.addressU = req.body.addressU;
             user.addressContract =  auditData.addCont;
             user.addressTransaction = auditData.addTran;
+            user.nameOfUser = req.body.nameOfUser;
+            user.status = req.body.status;
+            user.creationDate = req.body.creationDate;
 
 
             //Pruebas con MD5
@@ -125,14 +135,18 @@ function createRoot(req, res){
                 typeOfOperation: req.body.typeOfOperation,
                 nameOfOperation: req.body.nameOfOperation,
                 addressU: req.body.addressU,
+                nameOfUser: req.body.nameOfUser,
+                creationDate: req.body.creationDate,
+                status: req.body.status,
                 dp: req.body.dp
             };
             var hashX = md5(JSON.stringify(jsonData));
+            /*
             if(req.body.hashX == hashX){
                 console.log("MD5 correcto");
             }else{
                 console.log("MD5 incorrecto");
-            }
+            }*/
 
             if(user.initialToken == auditData.Token && req.body.hashX == hashX){
             //REVISAR SI EXISTE EL TIPO DE OPERACIÓN QUE SE ESTÁ EJECUTANDO
@@ -155,10 +169,10 @@ function createRoot(req, res){
                                             message: userStored
                                         });*/
                                         token.authenticate(req, res);
-                                        res.status(200).send({
+                                        /*res.status(200).send({
                                             user: userStored,
                                             token: initialToken
-                                        });
+                                        });*/
                                     }
                                 }
                             });
@@ -194,6 +208,10 @@ function createAdministrator(req, res){
             user.addressU = req.body.addressU;
             user.addressContract =  auditData.addCont;
             user.addressTransaction = auditData.addTran;
+            user.nameOfUser = req.body.nameOfUser;
+            user.status = req.body.status;
+            user.creationDate  = req.body.creationDate;
+
 
             //var key = req.body.key; //REVISAR
             //var hashX = req.body.hashX; //REVISAR
@@ -212,14 +230,18 @@ function createAdministrator(req, res){
                         typeOfOperation: req.body.typeOfOperation,
                         nameOfOperation: req.body.nameOfOperation,
                         addressU: req.body.addressU,
+                        nameOfUser: req.body.nameOfUser,
+                        creationDate: req.body.creationDate,
+                        status: req.body.status,
                         dp: req.body.dp
                     };
                     var hashX = md5(JSON.stringify(jsonData));
+                    /*
                     if(req.body.hashX == hashX){
                         console.log("MD5 correcto");
                     }else{
                         console.log("MD5 incorrecto");
-                    }
+                    }*/
                     if(typeOfOperationOK == true && user.initialToken == auditData.Token && req.body.hashX == hashX){
                         if(req.body.password){
                             //Encriptar contraseñas
@@ -252,7 +274,7 @@ function createAdministrator(req, res){
                     }else if(user.initialToken != auditData.Token){
                         return res.status(404).json({ message: 'Errores en los datos initialToken (users) : '+user.initialToken+' - Token (audit): '+auditData.Token });
                     }else if(typeOfOperationOK != true){
-                        return res.status(404).json({ message: 'No tienes permisos' });
+                        return res.status(404).json({ message: 'No tienes permisos para crear administradores' });
                     }else if(req.body.hashX != hashX){
                         return res.status(404).json({ message: 'HashX no coincide: '+hashX });
                     }else{
@@ -283,6 +305,9 @@ function createTUser(req, res){
             user.addressU = req.body.addressU;
             user.addressContract =  auditData.addCont;
             user.addressTransaction = auditData.addTran;
+            user.nameOfUser = req.body.nameOfUser;
+            user.status = req.body.status;
+            user.creationDate  = req.body.creationDate;
 
             //var key = req.body.key; //REVISAR
             //var hashX = req.body.hashX; //REVISAR
@@ -301,14 +326,19 @@ function createTUser(req, res){
                         typeOfOperation: req.body.typeOfOperation,
                         nameOfOperation: req.body.nameOfOperation,
                         addressU: req.body.addressU,
+                        nameOfUser: req.body.nameOfUser,
+                        creationDate: req.body.creationDate,
+                        status: req.body.status,
                         dp: req.body.dp
                     };
                     var hashX = md5(JSON.stringify(jsonData));
+                    /*
                     if(req.body.hashX == hashX){
                         console.log("MD5 correcto");
                     }else{
                         console.log("MD5 incorrecto");
-                    }
+                    }¨*/
+                    console.log(req.body);
                     if(typeOfOperationOK == true && user.initialToken == auditData.Token && req.body.hashX == hashX){
                         if(req.body.password){
                             //Encriptar contraseñas
@@ -339,9 +369,9 @@ function createTUser(req, res){
                             return res.status(200).json({ message: 'Introduce la contraseña' });
                         }
                     }else if(user.initialToken != auditData.Token){
-                        return res.status(404).json({ message: 'Errores en los datos initialToken (users) : '+user.initialToken+' - Token (audit): '+auditData.Token });
+                        return res.status(404).json({ message: 'Errores en los datos initialToken (users): '+user.initialToken+' - Token (audit): '+auditData.Token });
                     }else if(typeOfOperationOK != true){
-                        return res.status(404).json({ message: 'No tienes permisos' });
+                        return res.status(404).json({ message: 'No tienes permisos para crear usuarios normales' });
                     }else if(req.body.hashX != hashX){
                         return res.status(404).json({ message: 'HashX no coincide: '+hashX });
                     }else{
@@ -367,7 +397,7 @@ function serviceInit(req, initialToken, next) {
     var initialToken = initialToken;
     var typeOfOperation = req.body.typeOfOperation;
     var data;
-    var url = 'http://'+host+':'+port+''+path+'';
+    var url = 'http://'+host+':'+port.audit+''+path.audit+'';
     axios.post(url, {
         key: key,
         hashX: hashX,
@@ -435,21 +465,24 @@ function updateMe(req, res){
             typeOfOperation: req.body.typeOfOperation,
             nameOfOperation: req.body.nameOfOperation,
             addressU: req.body.addressU,
+            nameOfUser: req.body.nameOfUser,
+            status: req.body.status,
             dp: req.body.dp
         };
+        //console.log(jsonData);
         var hashX = md5(JSON.stringify(jsonData));
-        console.log(hashX);
-        if(req.body.hashX == hashX){
+        //console.log(hashX);
+        /*if(req.body.hashX == hashX){
             console.log("MD5 correcto");
         }else{
             console.log("MD5 incorrecto");
-        }
-        if(typeOfOperationOK == true && id == payload._id && !req.body.email && req.body.hashX == hashX){
+        }*/
+        if(typeOfOperationOK == true && id == payload._id && !req.body.email && !req.body.dp && req.body.hashX == hashX){
             //Pedir contraseña para confimar cambio
             if(req.body.password){
                 bcrypt.hash(req.body.password, null, null, function(err, hash){
                     req.body.password = hash;
-                    User.findOneAndUpdate({ email: id }, {password: req.body.password, dp: req.body.dp}, (err, userUpdate) => {
+                    User.findOneAndUpdate({ email: id }, {password: req.body.password, dp: req.body.dp, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
                         if(err){
                             res.status(500).send({message: 'Error al actualizar los datos'});
                         }else{
@@ -457,13 +490,14 @@ function updateMe(req, res){
                                 res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
                             }else{
                                 bool = true;
-                                res.status(200).send({message: bool});
+                                var generatedToken = service_jwt.createToken(userUpdate);
+                                res.status(200).send({message: bool, token: generatedToken});
                             }
                         }
                     });
                 });
             }else{
-                User.findOneAndUpdate({ email: id }, {dp: req.body.dp}, (err, userUpdate) => {
+                User.findOneAndUpdate({ email: id }, {dp: req.body.dp, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
                     if(err){
                         res.status(500).send({message: 'Error al actualizar los datos'});
                     }else{
@@ -482,8 +516,10 @@ function updateMe(req, res){
             res.status(404).send({message: 'Los ID´s no coinciden'});
         }else if(req.body.email){
             res.status(404).send({message: 'No puedes actualizar tu email - contacta con el desarrollador'});
+        }else if(req.body.dp){
+            res.status(404).send({message: 'No puedes actualizar tus permisos'});
         }else if(req.body.hashX != hashX){
-            return res.status(404).json({ message: 'HashX no coincide' });
+            return res.status(404).json({ message: 'HashX no coincide: '+hashX });
         }else{
             return res.status(404).json({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - initialToken (users): '+user.initialToken+' - Token (audit): '+auditData.Token+' - hashX (client): '+req.body.hashX+' - hashX(api): '+hashX });
         }
@@ -520,21 +556,23 @@ function updateAdministrator(req, res){
                         typeOfOperation: req.body.typeOfOperation,
                         nameOfOperation: req.body.nameOfOperation,
                         addressU: req.body.addressU,
+                        nameOfUser: req.body.nameOfUser,
+                        status: req.body.status,
                         dp: req.body.dp
                     };
                     var hashX = md5(JSON.stringify(jsonData));
-                    console.log(hashX);
+                    /*console.log(hashX);
                     if(req.body.hashX == hashX){
                         console.log("MD5 correcto");
                     }else{
                         console.log("MD5 incorrecto");
-                    }
+                    }*/
                     if(typeOfOperationOK == true && !req.body.email && req.body.hashX == hashX){
                         //Pedir contraseña para confimar cambio
                         if(req.body.password){
                             bcrypt.hash(req.body.password, null, null, function(err, hash){
                                 req.body.password = hash;
-                                User.findOneAndUpdate({ email: id }, {password: req.body.password, dp: req.body.dp}, (err, userUpdate) => {
+                                User.findOneAndUpdate({ email: id }, {password: req.body.password, dp: req.body.dp, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
                                     if(err){
                                         res.status(500).send({message: 'Error al actualizar los datos'});
                                     }else{
@@ -547,8 +585,8 @@ function updateAdministrator(req, res){
                                     }
                                 });
                             });
-                        }else{
-                            User.findOneAndUpdate({ email: id }, {dp: req.body.dp}, (err, userUpdate) => {
+                        }else if(!req.body.password){
+                            User.findOneAndUpdate({ email: id }, {dp: req.body.dp, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
                                 if(err){
                                     res.status(500).send({message: 'Error al actualizar los datos'});
                                 }else{
@@ -562,11 +600,11 @@ function updateAdministrator(req, res){
                             });
                         }
                     }else if(typeOfOperationOK == false){
-                        res.status(404).send({message: 'No tienes permisos para actualizar tus datos'});
+                        res.status(404).send({message: 'No tienes permisos para actualizar los datos de administradores'});
                     }else if(req.body.email){
                         res.status(404).send({message: 'No puedes actualizar el email - contacta con el desarrollador'});
                     }else if(req.body.hashX != hashX){
-                        return res.status(404).json({ message: 'HashX no coincide' });
+                        return res.status(404).json({ message: 'HashX no coincide: '+hashX });
                     }else{
                         return res.status(404).json({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - initialToken (users): '+user.initialToken+' - Token (audit): '+auditData.Token+' - hashX (client): '+req.body.hashX+' - hashX(api): '+hashX });
                     }
@@ -584,82 +622,77 @@ function updateTUser(req, res){
     .then(typeOfOperationOK => {
         var id = req.params.id.toLowerCase(); //CAMBIAR ESTE DATO POR LA VARIABLE QUE CONTENDRÁ LOS ID's DE LOS USUARIOS REGISTRADOS
         var bool = false;
-        var query = { email: id, typeOfUser: 'TUser' };
-        User.findOne(query, (err, usersStored) => {
-            if(err) {
-                res.status(500).send({message: 'Error en la petición'});
-            }else {
-                if(!usersStored) {
-                    res.status(404).send({message: 'No se ha encontrado el dato'});
-                }else {
-                    var jsonData = {
-                        email: id,
-                        password: req.body.password,
-                        typeOfUser: req.body.typeOfUser,
-                        initialToken: req.body.initialToken,
-                        typeOfOperation: req.body.typeOfOperation,
-                        nameOfOperation: req.body.nameOfOperation,
-                        addressU: req.body.addressU,
-                        dp: req.body.dp
-                    };
-                    var hashX = md5(JSON.stringify(jsonData));
-                    console.log(hashX);
-                    if(req.body.hashX == hashX){
-                        console.log("MD5 correcto");
-                    }else{
-                        console.log("MD5 incorrecto");
-                    }
-                    if(typeOfOperationOK == true && !req.body.email && req.body.hashX == hashX){
-                        //Pedir contraseña para confimar cambio
-                        if(req.body.password){
-                            bcrypt.hash(req.body.password, null, null, function(err, hash){
-                                req.body.password = hash;
-                                User.findOneAndUpdate({ email: id }, {password: req.body.password, dp: req.body.dp}, (err, userUpdate) => {
-                                    if(err){
-                                        res.status(500).send({message: 'Error al actualizar los datos'});
-                                    }else{
-                                        if(!userUpdate){
-                                            res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
-                                        }else{
-                                            bool = true;
-                                            res.status(200).send({message: bool});
-                                        }
-                                    }
-                                });
-                            });
+        //var query = { email: id, typeOfUser: 'TUser' };
+        //var query = { email: id };
+
+        var jsonData = {
+            email: id,
+            password: req.body.password,
+            typeOfUser: req.body.typeOfUser,
+            initialToken: req.body.initialToken,
+            typeOfOperation: req.body.typeOfOperation,
+            nameOfOperation: req.body.nameOfOperation,
+            addressU: req.body.addressU,
+            nameOfUser: req.body.nameOfUser,
+            status: req.body.status,
+            dp: req.body.dp
+        };
+        var hashX = md5(JSON.stringify(jsonData));
+        /*
+        console.log(hashX);
+        if(req.body.hashX == hashX){
+            console.log("MD5 correcto");
+        }else{
+            console.log("MD5 incorrecto");
+        }*/
+        if(typeOfOperationOK == true && !req.body.email && req.body.hashX == hashX){
+            //Pedir contraseña para confimar cambio
+            if(req.body.password){
+                bcrypt.hash(req.body.password, null, null, function(err, hash){
+                    req.body.password = hash;
+                    User.findOneAndUpdate({ email: id }, {password: req.body.password, dp: req.body.dp, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
+                        if(err){
+                            res.status(500).send({message: 'Error al actualizar los datos'});
                         }else{
-                            User.findOneAndUpdate({ email: id }, {dp: req.body.dp}, (err, userUpdate) => {
-                                if(err){
-                                    res.status(500).send({message: 'Error al actualizar los datos'});
-                                }else{
-                                    if(!userUpdate){
-                                        res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
-                                    }else{
-                                        bool = true;
-                                        res.status(200).send({message: bool});
-                                    }
-                                }
-                            });
+                            if(!userUpdate){
+                                res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
+                            }else{
+                                bool = true;
+                                res.status(200).send({message: bool});
+                            }
                         }
-                    }else if(typeOfOperationOK == false){
-                        res.status(404).send({message: 'No tienes permisos para actualizar tus datos'});
-                    }else if(req.body.email){
-                        res.status(404).send({message: 'No puedes actualizar el email - contacta con el desarrollador'});
-                    }else if(req.body.hashX != hashX){
-                        return res.status(404).json({ message: 'HashX no coincide' });
+                    });
+                });
+            } else if(!req.body.password){
+                User.findOneAndUpdate({ email: id }, {dp: req.body.dp, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
+                    if(err){
+                        res.status(500).send({message: 'Error al actualizar los datos'});
                     }else{
-                        return res.status(404).json({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - initialToken (users): '+user.initialToken+' - Token (audit): '+auditData.Token+' - hashX (client): '+req.body.hashX+' - hashX(api): '+hashX });
+                        if(!userUpdate){
+                            res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
+                        }else{
+                            bool = true;
+                            res.status(200).send({message: bool});
+                        }
                     }
-                }
+                });
             }
-        });
+        }else if(typeOfOperationOK == false){
+            res.status(404).send({message: 'No tienes permisos para actualizar los datos de usuarios normales'});
+        }else if(req.body.email){
+            res.status(404).send({message: 'No puedes actualizar el email - contacta con el desarrollador'});
+        }else if(req.body.hashX != hashX){
+            return res.status(404).json({ message: 'HashX no coincide: '+hashX });
+        }else{
+            return res.status(404).json({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - initialToken (users): '+user.initialToken+' - Token (audit): '+auditData.Token+' - hashX (client): '+req.body.hashX+' - hashX(api): '+hashX });
+        }
     });
 }
 
 function userDelete(req, res) {
     var typeOfOperation = req.body.typeOfOperation;
     var nameOfOperation = req.body.nameOfOperation;
-    console.log(req.body);
+    //console.log(req.body);
     switch(typeOfOperation) {
         case 'delete':
             if(nameOfOperation == 'deleteMe') {
@@ -682,8 +715,7 @@ function deleteMe(req, res){
     var nameOfOperation = req.body.nameOfOperation;
     permit.hasAccess(tokeninitial, typeOfOperation, nameOfOperation)
     .then(typeOfOperationOK => {
-        console.log(typeOfOperationOK);
-
+        //console.log(typeOfOperationOK);
         tokeninitial.replace(/['"]+/g, '');
         //var payload = decodeToken(tokeninitial);
         var payload = service_jwt.decodeToken(tokeninitial);
@@ -704,7 +736,7 @@ function deleteMe(req, res){
                     }
                 });
         }else if(typeOfOperationOK == false){
-            res.status(404).send({message: 'No tienes permisos para actualizar tus datos'});
+            res.status(404).send({message: 'No tienes permisos para eliminar tus datos'});
         }else if(id != payload._id) {
             res.status(404).send({message: 'Los ID´s no coinciden'});
         }else if(req.body.email){
@@ -751,7 +783,7 @@ function deleteAdministrator(req, res){
                                 }
                             });
                     }else if(typeOfOperationOK == false){
-                        res.status(404).send({message: 'No tienes permisos para actualizar tus datos'});
+                        res.status(404).send({message: 'No tienes permisos para eliminar administradores'});
                     }else if(req.body.email){
                         res.status(404).send({message: 'No puedes actualizar el email - contacta con el desarrollador'});
                     }else{
@@ -771,77 +803,129 @@ function deleteTUser(req, res){
     .then(typeOfOperationOK => {
         var id = req.params.id.toLowerCase(); //CAMBIAR ESTE DATO POR LA VARIABLE QUE CONTENDRÁ LOS ID's DE LOS USUARIOS REGISTRADOS
         var bool = false;
-        var query = { email: id, typeOfUser: 'TUser' };
-        User.findOne(query, (err, usersStored) => {
-            if(err) {
-                res.status(500).send({message: 'Error en la petición'});
-            }else {
-                if(!usersStored) {
-                    res.status(404).send({message: 'No se ha encontrado el dato'});
-                }else {
-                    if(typeOfOperationOK == true && !req.body.email){
-                        //Pedir contraseña para confimar cambio
-                            User.findOneAndRemove({ email: id }, (err, userUpdate) => {
-                                if(err){
-                                    res.status(500).send({message: 'Error al actualizar los datos'});
-                                }else{
-                                    if(!userUpdate){
-                                        res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
-                                    }else{
-                                        bool = true;
-                                        res.status(200).send({message: bool});
-                                    }
-                                }
-                            });
-                    }else if(typeOfOperationOK == false){
-                        res.status(404).send({message: 'No tienes permisos para actualizar tus datos'});
-                    }else if(req.body.email){
-                        res.status(404).send({message: 'No puedes actualizar el email - contacta con el desarrollador'});
+        //var query = { email: id, typeOfUser: 'TUser' };
+        var query = { email: id };
+        if(typeOfOperationOK == true && !req.body.email){
+            //Pedir contraseña para confimar cambio
+            User.findOneAndRemove({ email: id }, (err, userUpdate) => {
+                if(err){
+                    res.status(500).send({message: 'Error al actualizar los datos'});
+                }else{
+                    if(!userUpdate){
+                        res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
                     }else{
-                        res.status(404).send({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - ID (users) : '+id +' - ID (token): '+payload._id+' - Email: '+req.body.email });
+                        bool = true;
+                        res.status(200).send({message: bool});
                     }
                 }
-            }
-        });
+            });
+        }else if(typeOfOperationOK == false){
+            res.status(404).send({message: 'No tienes permisos para eliminar usuarios normales'});
+        }else if(req.body.email){
+            res.status(404).send({message: 'No puedes actualizar el email - contacta con el desarrollador'});
+        }else{
+            res.status(404).send({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - ID (users) : '+id +' - ID (token): '+payload._id+' - Email: '+req.body.email });
+        }
     });
 }
 
 function getUser(req, res){
     var userId = req.params.id;
-    User.findOne({email: userId}, (err, users) => {
+    var payload = service_jwt.decodeToken(req.headers.authorization);
+    User.findOne({email: userId}, (err, user) => {
         if(err){
             res.status(500).send({message: 'Error en la petición'});
         }else{
-            if(!users){
+            if(!user){
                 res.status(404).send({message: 'El dato no existe'});
             }else{
-                res.status(200).send({users});
+                var token = req.headers.authorization;
+                var typeOfOperation = 'read';
+                var nameOfOperation;
+                if(payload._id == req.params.id){
+                    nameOfOperation = 'readMe';
+                }else if(user.typeOfUser == 'Administrator') {
+                    nameOfOperation = 'readAdministrator';
+                }else {
+                    nameOfOperation = 'readTUser';
+                }
+                permit.hasAccess(token, typeOfOperation, nameOfOperation)
+                .then(typeOfOperationOK => {
+                    //console.log(typeOfOperationOK);
+                    if(typeOfOperationOK == true){
+                        res.status(200).send({ user });
+                    }else{
+                        res.status(404).send({message: 'No tienes permisos para ver estos datos'});
+                    }
+                })
+                .catch(err => {
+                    // never goes here
+                    console.log(err);
+                    return res.status(550).json(err);
+                });
             }
         }
     });
 }
 function getUsers(req, res){
+    var payload = service_jwt.decodeToken(req.headers.authorization);
     if(req.params.page){
         var page = req.params.page;
     }else{
         var page = 1;
     }
-    var itemsPerPage = 3;
+    var itemsPerPage = 20;
     User.find().sort('email').paginate(page, itemsPerPage, function(err, users, total){
         if(err){
             res.status(500).send({message: 'Error en la petición'});
-
         }else{
             if(!users){
                 res.status(404).send({message: 'No hay datos'});
             }else{
-                return res.status(200).send({
-                    total_items: total,
-                    users: users
-                });
-            }
-        }
-    });
+                if(payload.typeOfUser == 'Root' || payload.typeOfUser == 'Administrator'){
+                    var token = req.headers.authorization;
+                    var typeOfOperation = 'read';
+                    var nameOfOperation = 'readAdministrator';
+                    var usersView = [];
+                    permit.hasAccess(token, typeOfOperation, nameOfOperation)
+                    .then(typeOfOperationOK => {
+                        if(typeOfOperationOK == true){
+                            for(var user of users){
+                                if(user.typeOfUser == 'Administrator' && user.email != payload._id){
+                                    usersView.push(user);
+                                }
+                            }
+                        }
+                        nameOfOperation = 'readTUser';
+                        permit.hasAccess(token, typeOfOperation, nameOfOperation)
+                        .then(typeOfOperationOK => {
+                            if(typeOfOperationOK == true){
+                                for(var user of users){
+                                    if(user.typeOfUser == 'TUser' || user.typeOfUser == 'Merchant' || user.typeOfUser == 'Carrier' || user.typeOfUser == 'Acopio' || user.typeOfUser == 'Productor'){
+                                        usersView.push(user);
+                                    }
+                                }
+                            }
+                            //console.log(usersView);
+                            return res.status(200).send({ total_items: usersView.length, users: usersView });
+                        })
+                        .catch(err => {
+                            // never goes here
+                            console.log(err);
+                            return res.status(550).json(err);
+                        });
+                    })
+                    .catch(err => {
+                        // never goes here
+                        console.log(err);
+                        return res.status(550).json(err);
+                    });
+                 }else{
+                     return res.status(400).send({ message: "No tienes permisos para ver datos de otros usuarios" });
+                 }
+             }
+         }
+     });
 }
 //--------------------------------------------New--------------------------------------------
 

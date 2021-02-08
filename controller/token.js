@@ -21,8 +21,10 @@ function authenticate(req, res){
     var email = req.body.email;
     var password = req.body.password;
     var typeOfUser = req.body.typeOfUser; //FALTA CHECAR ESTO
+    var typeOfOperation = req.body.typeOfOperation;
+    var nameOfOperation = req.body.nameOfOperation;
 
-    var query = {email: email, typeOfUser: typeOfUser};
+    var query = { email: email };
     if(req.body.email != '' && req.body.password != ''){
     	//Modificar
 	    User.findOne(query, (err, user) => {
@@ -40,8 +42,22 @@ function authenticate(req, res){
 	    						//Delvover un token de JWT
 	    						console.log("ERROR");
 	    					}else{
-	    						var initialToken = service_jwt.createToken(user);
-	    						res.status(200).send({ message: true, user: user });
+	    						var temporalToken = service_jwt.createToken(user);
+	    						//res.status(200).send({ message: true, token: user.initialToken, user: user });
+	    						permit.hasAccess(temporalToken, typeOfOperation, nameOfOperation)
+								.then(typeOfOperationOK => {
+									console.log('typeOfOperationOK: '+typeOfOperationOK);
+									if(typeOfOperationOK == true){
+		    							res.status(200).send({ message: true, user: user, token: temporalToken });
+									}else if(typeOfOperationOK == false){
+		    							res.status(200).send({ message: false });
+									}
+								})
+								.catch(err => {
+									// never goes here
+									console.log(err);
+									return res.status(505).json({message: "Error 505"});
+								});
 	    					}
 	    				}else{
 	    					res.status(404).send({message: 'El usuario no se ha podido indentificar'});
@@ -135,23 +151,17 @@ function tokenIsValid(req, res){
 		}
 	});
 }
-
-function checkTokens(req, res){
-	var token = req.body.token.replace(/['"]+/g, '');
-	if(!req.body.token){
-		return res.status(300).json({message: "Rellena el campo"});
-	}
+/*
+function checkTokens(typeOfOperation, nameOfOperation, token, user, res){
 	var payload = decodeToken(token);
 	//console.log(payload);
 	var valid = moment().unix();
-	var typeOfOperation = req.body.typeOfOperation;;
-	var nameOfOperation = req.body.nameOfOperation;
-	var email = req.body.email;
+	var email = user.email;
     var query = {};
 
 	permit.hasAccess(token, typeOfOperation, nameOfOperation)
 	.then(typeOfOperationOK => {
-		//console.log('typeOfOperationOK: '+typeOfOperationOK);
+		console.log('typeOfOperationOK: '+typeOfOperationOK);
 		if(payload.life <= valid){
 			return res.status(200).json({message: "Caducado"});
 		}else{
@@ -173,7 +183,7 @@ function checkTokens(req, res){
 							message: true
 						});
 					}else if(typeOfOperationOK == false){
-						return res.status(404).json({
+						return res.status(200).json({
 							message: false
 						});
 					}
@@ -183,6 +193,11 @@ function checkTokens(req, res){
 					return res.status(505).json({message: "Error 505"});
 				});
 		}
+		if(typeOfOperationOK == true){
+			return true;
+		}else if(typeOfOperationOK == false){
+			return false;
+		}
 	})
 	.catch(err => {
 		// never goes here
@@ -190,7 +205,7 @@ function checkTokens(req, res){
 		return res.status(505).json({message: "Error 505"});
 	});
 }
-
+*/
 function decodeToken(token){
     var secret = 'secret_key';
     var payload = jwt.decode(token, secret);
@@ -363,7 +378,7 @@ initializer.whoP=function(token,fn){
 
 module.exports = {
 	authenticate,
-	checkTokens,
+	//checkTokens,
 	tokenCreation,
 	tokenRenovation,
 	tokenIsValid

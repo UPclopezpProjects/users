@@ -5,6 +5,9 @@ var UserSchema = Schema({
     email: {type: String, required: true, max: 100},
     password: {type: String, required: true, max: 100},
     typeOfUser: {type: String, required: true, max: 20}, //"rootCreation","admorCreation" //
+    nameOfUser: {type: String, required: true, max: 20},
+    status: {type: String, required: true, max: 20},
+    creationDate: {type: String, required: true, max: 20},
     initialToken: {type: String, required: true, max: 50}, //
     dp: {type: String, required: true, max: 200},
     addressU: {type: String, required: true, max: 200},

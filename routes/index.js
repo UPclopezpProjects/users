@@ -15,10 +15,8 @@ var sbi = require('../controller/sbi.js');
 
 var UserController = require('../controller/user');
 var TokenController = require('../controller/token');
-var PermitController = require('../controller/permit')
-
-
-
+var PermitController = require('../controller/permit');
+var TransactionController = require('../controller/transaction');
 
 //************************************************
 //************************************************
@@ -79,17 +77,19 @@ router.delete('/userDelete/:id', UserController.userDelete);
 
 //Authentication
 router.post('/login', TokenController.authenticate);
-router.post('/login/token', TokenController.checkTokens);
+//router.post('/login/token', TokenController.checkTokens);
 router.put('/tokenRenovation', TokenController.tokenRenovation);
 router.post('/tokenIsValid', TokenController.tokenIsValid);
-
-
 
 //Permit
 /*router.get('/permitions', function(req, res){
 	res.render('permitions');
 });*/
 router.get('/permitions', PermitController.permitions);
+
+
+//merchant
+router.post('/merchantData', TransactionController.merchantData);
 
 /*----------Pruebas de conexión y obtención de datos----------*/
 
