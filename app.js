@@ -2,11 +2,9 @@
 global.host = 'host.docker.internal'; //host.docker.internal
 global.port = {
   audit: '3000',
-  merchant: '3002'
 };
 global.path = {
   audit: '/exec/createUserSC',
-  merchant: '/data'
 };
 //
 
@@ -74,7 +72,7 @@ app.use(function(err, req, res, next) {
 });
 
 var mongoose = require('mongoose');
-var mongoDB = 'mongodb://172.20.0.4:27017/users';
+var mongoDB = 'mongodb://172.20.0.1:27017/users';
 
 var port = process.env.PORT || 3001;
 

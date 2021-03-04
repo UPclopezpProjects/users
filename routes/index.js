@@ -1,6 +1,7 @@
 var path = require('path');
 var express = require('express');
 var router = express.Router();
+var md_auth = require('../middlewares/authenticated');
 
 
 //var main = require('../controller/index.js');

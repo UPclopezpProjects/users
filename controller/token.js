@@ -17,10 +17,11 @@ var permit = require("./permit");
 
 //--------------------------------------------New--------------------------------------------
 function authenticate(req, res){
-	console.log(req.body);
+	//console.log(`Logged  ${req.url}  ${req.method} -- ${new Date()}`);
+	//console.log(req.body);
     var email = req.body.email;
     var password = req.body.password;
-    var typeOfUser = req.body.typeOfUser; //FALTA CHECAR ESTO
+    //var typeOfUser = req.body.typeOfUser; //FALTA CHECAR ESTO
     var typeOfOperation = req.body.typeOfOperation;
     var nameOfOperation = req.body.nameOfOperation;
 
@@ -43,21 +44,33 @@ function authenticate(req, res){
 	    						console.log("ERROR");
 	    					}else{
 	    						var temporalToken = service_jwt.createToken(user);
-	    						//res.status(200).send({ message: true, token: user.initialToken, user: user });
-	    						permit.hasAccess(temporalToken, typeOfOperation, nameOfOperation)
-								.then(typeOfOperationOK => {
-									console.log('typeOfOperationOK: '+typeOfOperationOK);
-									if(typeOfOperationOK == true){
-		    							res.status(200).send({ message: true, user: user, token: temporalToken });
-									}else if(typeOfOperationOK == false){
-		    							res.status(200).send({ message: false });
-									}
-								})
-								.catch(err => {
-									// never goes here
-									console.log(err);
-									return res.status(505).json({message: "Error 505"});
-								});
+	    						Token.findOneAndUpdate({ email: user.email }, {generatedToken: temporalToken}, (err, tokenUpdate) => {
+							    	if(err){
+							    		res.status(500).send({message: 'Error en la petición'});
+							    	}else{
+							    		if(!tokenUpdate){
+							    			res.status(404).send({message: 'El token no existe'});
+							    		}else{
+				    						//res.status(200).send({ message: true, token: user.initialToken, user: user });
+				    						permit.hasAccess(temporalToken, typeOfOperation, nameOfOperation)
+											.then(typeOfOperationOK => {
+												//console.log('User: '+user);
+												if(typeOfOperationOK == true && user.status == 'true'){
+					    							res.status(200).send({ message: true, user: user, token: temporalToken });
+												}else if(typeOfOperationOK == false){
+					    							res.status(200).send({ message: false });
+												}else if(user.status == 'false'){
+					    							res.status(200).send({ message: null });
+												}
+											})
+											.catch(err => {
+												// never goes here
+												console.log(err);
+												return res.status(505).json({message: "Error 505 - Error en la promesa"});
+											});
+							    		}
+							    	}
+							    });
 	    					}
 	    				}else{
 	    					res.status(404).send({message: 'El usuario no se ha podido indentificar'});
@@ -90,33 +103,46 @@ function tokenCreation(newToken, email){
 	});
 }
 
-function tokenRenovation(req, res){
-	var token = req.body.generatedToken.replace(/['"]+/g, '');
-	var payload = decodeToken(token);
-
-	var email = req.body.email;
-	var query = { generatedToken: token, email: email };
-
-	var updateLife = moment().add(7, 'd').unix();
-	var user = {
-		_id: payload._id,
-		typeOfUser: payload.typeOfUser,
-		DP: payload.DP,
-		creation: payload.creation,
-		life: updateLife,
-	};
-	var generatedToken = service_jwt.renovationToken(user); //Guardar token en la base de datos
-	var update = { generatedToken: generatedToken };
-
-	Token.findOneAndUpdate(query, update, (err, data) => {
+function tokenRenovation(userUpdate, res){
+	var bool = false;
+	Token.findOne({email: userUpdate.email}, (err, tokenStored) => {
 		if(err){
 			res.status(500).send({message: 'Error en la petición'});
 		}else{
-			if(!data){
+			if(!tokenStored){
 				res.status(404).send({message: 'El token o email no existe'});
 			}else{
-				res.status(200).send({
-					message: generatedToken
+				var payload = decodeToken(tokenStored.generatedToken);
+				var updateLife = moment().add(7, 'd').unix();
+				var user = {
+					_id: payload._id,
+					typeOfUser: payload.typeOfUser,
+					DP: payload.DP,
+					creation: payload.creation,
+					life: updateLife,
+				};
+				var newToken = service_jwt.renovationToken(user);
+				Token.findOneAndUpdate({ email: userUpdate.email, generatedToken: tokenStored.generatedToken }, {generatedToken: newToken}, (err, tokenUpdate) => {
+					if(err){
+						res.status(500).send({message: 'Error en la petición'});
+					}else{
+						if(!tokenUpdate){
+							res.status(404).send({message: 'El token no existe'});
+						}else{
+							User.findOne({ email: userUpdate.email }, (err, userStored) => {
+						    	if(err){
+						    		res.status(500).send({message: 'Error en la petición'});
+						    	}else{
+						    		if(!userStored){
+						    			res.status(404).send({message: 'El usuario no existe'});
+						    		}else{
+						    			bool = true;
+						    			res.status(200).send({message: bool, user: userStored, token: newToken});
+						    		}
+						    	}
+						    });
+						}
+					}
 				});
 			}
 		}

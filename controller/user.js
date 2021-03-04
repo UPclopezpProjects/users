@@ -99,6 +99,7 @@ function checkEmail(req, res, typeOfUser){
                         break;
                 }
             }else{
+                console.log("Entré aquí - "+emailStored);
                 res.status(404).send({ message: 'Ya existe un usuario con el email: '+email });
             }
         }
@@ -114,7 +115,7 @@ function createRoot(req, res){
             var user = new User();
             var auditData = data;
 
-            user.email = req.body.email;
+            user.email = req.body.email.toLowerCase();
             user.typeOfUser = req.body.typeOfUser;
             user.initialToken = initialToken;
             user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
@@ -201,7 +202,7 @@ function createAdministrator(req, res){
             var user = new User();
             var auditData = data;
 
-            user.email = req.body.email;
+            user.email = req.body.email.toLowerCase();
             user.typeOfUser = req.body.typeOfUser;
             user.initialToken = req.body.initialToken;
             user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
@@ -298,7 +299,7 @@ function createTUser(req, res){
             var user = new User();
             var auditData = data;
 
-            user.email = req.body.email;
+            user.email = req.body.email.toLowerCase();
             user.typeOfUser = req.body.typeOfUser;
             user.initialToken = req.body.initialToken;
             user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
@@ -391,6 +392,7 @@ function createTUser(req, res){
 Funciones encargada de invocar los servicios RESTful y devolver el objeto JSON correspondiente.
 */
 function serviceInit(req, initialToken, next) {
+    console.log("serviceInit");
     var key = req.body.addressU;
     var hashX = req.body.hashX;
     var typeOfUser = req.body.typeOfUser;
@@ -456,7 +458,6 @@ function updateMe(req, res){
         //var payload = decodeToken(tokeninitial);
         var payload = service_jwt.decodeToken(tokeninitial);
         var id = req.params.id.toLowerCase(); //CAMBIAR ESTE DATO POR LA VARIABLE QUE CONTENDRÁ LOS ID's DE LOS USUARIOS REGISTRADOS
-        var bool = false;
         var jsonData = {
             email: id,
             password: req.body.password,
@@ -482,30 +483,27 @@ function updateMe(req, res){
             if(req.body.password){
                 bcrypt.hash(req.body.password, null, null, function(err, hash){
                     req.body.password = hash;
-                    User.findOneAndUpdate({ email: id }, {password: req.body.password, dp: req.body.dp, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
+                    User.findOneAndUpdate({ email: id }, {password: req.body.password, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
                         if(err){
                             res.status(500).send({message: 'Error al actualizar los datos'});
                         }else{
                             if(!userUpdate){
                                 res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
                             }else{
-                                bool = true;
-                                var generatedToken = service_jwt.createToken(userUpdate);
-                                res.status(200).send({message: bool, token: generatedToken});
+                                token.tokenRenovation(userUpdate, res); //Guardar token en la base de datos
                             }
                         }
                     });
                 });
             }else{
-                User.findOneAndUpdate({ email: id }, {dp: req.body.dp, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
+                User.findOneAndUpdate({ email: id }, {nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
                     if(err){
                         res.status(500).send({message: 'Error al actualizar los datos'});
                     }else{
                         if(!userUpdate){
                             res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
                         }else{
-                            bool = true;
-                            res.status(200).send({message: bool});
+                            token.tokenRenovation(userUpdate, res); //Guardar token en la base de datos
                         }
                     }
                 });
@@ -533,6 +531,7 @@ function updateMe(req, res){
 
 //Cambiar nombre de tokeninitial a token
 function updateAdministrator(req, res){
+    //console.log(req.body);
     var tokeninitial = req.headers.authorization;
     var typeOfOperation = req.body.typeOfOperation;
     var nameOfOperation = req.body.nameOfOperation;
@@ -615,6 +614,7 @@ function updateAdministrator(req, res){
 }
 
 function updateTUser(req, res){
+    //console.log(req.body);
     var tokeninitial = req.headers.authorization;
     var typeOfOperation = req.body.typeOfOperation;
     var nameOfOperation = req.body.nameOfOperation;
@@ -692,7 +692,6 @@ function updateTUser(req, res){
 function userDelete(req, res) {
     var typeOfOperation = req.body.typeOfOperation;
     var nameOfOperation = req.body.nameOfOperation;
-    //console.log(req.body);
     switch(typeOfOperation) {
         case 'delete':
             if(nameOfOperation == 'deleteMe') {
@@ -831,7 +830,10 @@ function deleteTUser(req, res){
 
 function getUser(req, res){
     var userId = req.params.id;
-    var payload = service_jwt.decodeToken(req.headers.authorization);
+    var token = req.headers.authorization;
+    var payload = service_jwt.decodeToken(token);
+    var typeOfOperation = 'read';
+    var nameOfOperation;
     User.findOne({email: userId}, (err, user) => {
         if(err){
             res.status(500).send({message: 'Error en la petición'});
@@ -839,9 +841,6 @@ function getUser(req, res){
             if(!user){
                 res.status(404).send({message: 'El dato no existe'});
             }else{
-                var token = req.headers.authorization;
-                var typeOfOperation = 'read';
-                var nameOfOperation;
                 if(payload._id == req.params.id){
                     nameOfOperation = 'readMe';
                 }else if(user.typeOfUser == 'Administrator') {
@@ -874,7 +873,7 @@ function getUsers(req, res){
     }else{
         var page = 1;
     }
-    var itemsPerPage = 20;
+    var itemsPerPage = 5;
     User.find().sort('email').paginate(page, itemsPerPage, function(err, users, total){
         if(err){
             res.status(500).send({message: 'Error en la petición'});
@@ -907,7 +906,7 @@ function getUsers(req, res){
                                 }
                             }
                             //console.log(usersView);
-                            return res.status(200).send({ total_items: usersView.length, users: usersView });
+                            return res.status(200).send({ total_items: total, users: usersView });
                         })
                         .catch(err => {
                             // never goes here

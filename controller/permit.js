@@ -35,7 +35,7 @@ function hasAccess(token, typeOfOperation, nameOfOperation){
 	return new Promise(function(resolve, reject) {
 		Dictionary.findOne(query)
 		.then(transactionStored => {
-			console.log(transactionStored);
+			//console.log(transactionStored);
 			var permitionArray = transactionStored.permitAccessTo;
 			var permitionJSON = JSON.parse(permitionArray);
 			if(userType == 'Root'){
