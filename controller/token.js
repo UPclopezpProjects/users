@@ -1,6 +1,8 @@
 //
 var Token = require("../models/Tokens");
 var User = require("../models/Users");
+var Consumer = require("../models/Consumers");
+
 
 var jwt = require('jwt-simple');
 var moment = require('moment');
@@ -33,7 +35,8 @@ function authenticate(req, res){
 	    		res.status(500).send({message: 'Error en la petición'});
 	    	}else{
 	    		if(!user){
-	    			res.status(404).send({message: 'El usuario no existe'});
+	    			authenticateConsumers(req, res);
+	    			//res.status(404).send({message: 'El usuario no existe'});
 	    		}else{
 	    			//Comprobar la contraseña
 	    			bcrypt.compare(password, user.password, function(err, check){
@@ -84,6 +87,64 @@ function authenticate(req, res){
 	}
 }
 
+function authenticateConsumers(req, res){
+    var email = req.body.email;
+    var password = req.body.password;
+    var typeOfOperation = req.body.typeOfOperation;
+    var nameOfOperation = req.body.nameOfOperation;
+
+    var query = { email: email };
+    if(req.body.email != '' && req.body.password != ''){
+	    Consumer.findOne(query, (err, user) => {
+	    	if(err){
+	    		res.status(500).send({message: 'Error en la petición'});
+	    	}else{
+	    		if(!user){
+	    			res.status(404).send({message: 'El usuario no existe'});
+	    		}else{
+	    			bcrypt.compare(password, user.password, function(err, check){
+	    				if(check){
+	    					if(req.body.gethash){
+	    						console.log("ERROR");
+	    					}else{
+	    						var temporalToken = service_jwt.createToken(user);
+	    						Token.findOneAndUpdate({ email: user.email }, {generatedToken: temporalToken}, (err, tokenUpdate) => {
+							    	if(err){
+							    		res.status(500).send({message: 'Error en la petición'});
+							    	}else{
+							    		if(!tokenUpdate){
+							    			res.status(404).send({message: 'El token no existe'});
+							    		}else{
+				    						permit.hasAccess(temporalToken, typeOfOperation, nameOfOperation)
+											.then(typeOfOperationOK => {
+												if(typeOfOperationOK == true){
+					    							res.status(200).send({ message: true, user: user, token: temporalToken }); //Todo correcto
+												}else if(typeOfOperationOK == false){
+					    							res.status(200).send({ message: false }); //Sin permisos
+												}else if(user.status == 'false'){
+					    							res.status(200).send({ message: null }); //Error
+												}
+											})
+											.catch(err => {
+												console.log(err);
+												return res.status(505).json({message: "Error 505 - Error en la promesa"});
+											});
+							    		}
+							    	}
+							    });
+	    					}
+	    				}else{
+	    					res.status(404).send({message: 'El usuario no se ha podido indentificar'});
+	    				}
+	    			})
+	    		}
+	    	}
+	    });
+	}else{
+		res.status(404).json({ message: 'Rellena todos los campos' });
+	}
+}
+
 function tokenCreation(newToken, email){
 	var token = new Token();
 	token.generatedToken = newToken;
@@ -103,7 +164,7 @@ function tokenCreation(newToken, email){
 	});
 }
 
-function tokenRenovation(userUpdate, res){
+function tokenRenovation(userUpdate, nameOfOperation, res){
 	var bool = false;
 	Token.findOne({email: userUpdate.email}, (err, tokenStored) => {
 		if(err){
@@ -134,16 +195,48 @@ function tokenRenovation(userUpdate, res){
 						    		res.status(500).send({message: 'Error en la petición'});
 						    	}else{
 						    		if(!userStored){
-						    			res.status(404).send({message: 'El usuario no existe'});
+						    			//res.status(404).send({message: 'El usuario no existe'});
+						    			Consumer.findOne({ email: userUpdate.email }, (err, userStored) => {
+									    	if(err){
+									    		res.status(500).send({message: 'Error en la petición'});
+									    	}else{
+									    		if(!userStored){
+									    			res.status(404).send({message: 'El usuario no existe'});
+									    		}else{
+									    			bool = true;
+									    			res.status(200).send({message: bool, user: userStored, token: newToken});
+									    		}
+									    	}
+									    });
 						    		}else{
 						    			bool = true;
-						    			res.status(200).send({message: bool, user: userStored, token: newToken});
+						    			if(nameOfOperation == "updateAdministrator" || nameOfOperation == "updateTUser"){
+                            				res.status(200).send({message: bool});
+						    			}else{
+						    				res.status(200).send({message: bool, user: userStored, token: newToken});
+						    			}
 						    		}
 						    	}
 						    });
 						}
 					}
 				});
+			}
+		}
+	});
+}
+
+function tokenDelete(userDelete, nameOfOperation, res){
+	var bool = false;
+	Token.findOneAndRemove({email: userDelete.email}, (err, tokenDelete) => {
+		if(err){
+			res.status(500).send({message: 'Error en la petición'});
+		}else{
+			if(!tokenDelete){
+				res.status(404).send({message: 'El token o email no existe'});
+			}else{
+				bool = true;
+				res.status(200).send({message: bool});
 			}
 		}
 	});
@@ -404,8 +497,10 @@ initializer.whoP=function(token,fn){
 
 module.exports = {
 	authenticate,
+	authenticateConsumers,
 	//checkTokens,
 	tokenCreation,
 	tokenRenovation,
+	tokenDelete,
 	tokenIsValid
 };

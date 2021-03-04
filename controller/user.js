@@ -1,5 +1,6 @@
 //
 var User = require("../models/Users");
+var Consumer = require("../models/Consumers");
 
 var axios = require('axios');
 var bcrypt = require('bcrypt-nodejs');
@@ -120,8 +121,8 @@ function createRoot(req, res){
             user.initialToken = initialToken;
             user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
             user.addressU = req.body.addressU;
-            user.addressContract =  auditData.addCont;
-            user.addressTransaction = auditData.addTran;
+            user.addressContract =  auditData.y.addCont;
+            user.addressTransaction = auditData.y.addTran;
             user.nameOfUser = req.body.nameOfUser;
             user.status = req.body.status;
             user.creationDate = req.body.creationDate;
@@ -129,7 +130,7 @@ function createRoot(req, res){
 
             //Pruebas con MD5
             var jsonData = {
-                email: req.body.email,
+                email: req.body.email.toLowerCase(),
                 password: req.body.password,
                 typeOfUser: req.body.typeOfUser,
                 initialToken: req.body.initialToken,
@@ -169,6 +170,8 @@ function createRoot(req, res){
                                         /*res.status(200).send({
                                             message: userStored
                                         });*/
+                                        req.body.typeOfOperation = 'authentication';
+                                        req.body.nameOfOperation = 'loginUser';
                                         token.authenticate(req, res);
                                         /*res.status(200).send({
                                             user: userStored,
@@ -207,8 +210,8 @@ function createAdministrator(req, res){
             user.initialToken = req.body.initialToken;
             user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
             user.addressU = req.body.addressU;
-            user.addressContract =  auditData.addCont;
-            user.addressTransaction = auditData.addTran;
+            user.addressContract =  auditData.y.addCont;
+            user.addressTransaction = auditData.y.addTran;
             user.nameOfUser = req.body.nameOfUser;
             user.status = req.body.status;
             user.creationDate  = req.body.creationDate;
@@ -224,7 +227,7 @@ function createAdministrator(req, res){
                 .then(typeOfOperationOK => {
                     //Pruebas con MD5
                     var jsonData = {
-                        email: req.body.email,
+                        email: req.body.email.toLowerCase(),
                         password: req.body.password,
                         typeOfUser: req.body.typeOfUser,
                         initialToken: req.body.initialToken,
@@ -292,6 +295,7 @@ function createAdministrator(req, res){
 }
 
 function createTUser(req, res){
+    console.log(req.body);
     serviceInit(req, req.headers.authorization, function(data, err) {
         if (err) {
             res.status(500).send({ message: 'Error en la petición' });
@@ -304,8 +308,8 @@ function createTUser(req, res){
             user.initialToken = req.body.initialToken;
             user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
             user.addressU = req.body.addressU;
-            user.addressContract =  auditData.addCont;
-            user.addressTransaction = auditData.addTran;
+            user.addressContract =  auditData.y.addCont;
+            user.addressTransaction = auditData.y.addTran;
             user.nameOfUser = req.body.nameOfUser;
             user.status = req.body.status;
             user.creationDate  = req.body.creationDate;
@@ -320,7 +324,7 @@ function createTUser(req, res){
                 .then(typeOfOperationOK => {
                     //Pruebas con MD5
                     var jsonData = {
-                        email: req.body.email,
+                        email: req.body.email.toLowerCase(),
                         password: req.body.password,
                         typeOfUser: req.body.typeOfUser,
                         initialToken: req.body.initialToken,
@@ -339,7 +343,7 @@ function createTUser(req, res){
                     }else{
                         console.log("MD5 incorrecto");
                     }¨*/
-                    console.log(req.body);
+                    //console.log(req.body);
                     if(typeOfOperationOK == true && user.initialToken == auditData.Token && req.body.hashX == hashX){
                         if(req.body.password){
                             //Encriptar contraseñas
@@ -392,7 +396,7 @@ function createTUser(req, res){
 Funciones encargada de invocar los servicios RESTful y devolver el objeto JSON correspondiente.
 */
 function serviceInit(req, initialToken, next) {
-    console.log("serviceInit");
+    //console.log("serviceInit");
     var key = req.body.addressU;
     var hashX = req.body.hashX;
     var typeOfUser = req.body.typeOfUser;
@@ -430,7 +434,13 @@ function userUpdate(req, res) {
                 switch(typeOfOperation) {
                     case 'update':
                         if(nameOfOperation == 'updateMe') {
-                            updateMe(req, res);
+                            var payload = service_jwt.decodeToken(req.headers.authorization);
+                            console.log(payload);
+                            if(payload.typeOfUser == 'Consumer'){
+                                updateConsumer(req, res);
+                            }else{
+                                updateMe(req, res);
+                            }
                         }else if(nameOfOperation == 'updateAdministrator') {
                             updateAdministrator(req, res);
                         }else if(nameOfOperation == 'updateTUser'){
@@ -490,7 +500,7 @@ function updateMe(req, res){
                             if(!userUpdate){
                                 res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
                             }else{
-                                token.tokenRenovation(userUpdate, res); //Guardar token en la base de datos
+                                token.tokenRenovation(userUpdate, nameOfOperation, res); //Guardar token en la base de datos
                             }
                         }
                     });
@@ -503,7 +513,7 @@ function updateMe(req, res){
                         if(!userUpdate){
                             res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
                         }else{
-                            token.tokenRenovation(userUpdate, res); //Guardar token en la base de datos
+                            token.tokenRenovation(userUpdate, nameOfOperation, res); //Guardar token en la base de datos
                         }
                     }
                 });
@@ -578,8 +588,9 @@ function updateAdministrator(req, res){
                                         if(!userUpdate){
                                             res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
                                         }else{
-                                            bool = true;
-                                            res.status(200).send({message: bool});
+                                            //bool = true;
+                                            //res.status(200).send({message: bool});
+                                            token.tokenRenovation(userUpdate, nameOfOperation, res); //Guardar token en la base de datos
                                         }
                                     }
                                 });
@@ -592,8 +603,9 @@ function updateAdministrator(req, res){
                                     if(!userUpdate){
                                         res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
                                     }else{
-                                        bool = true;
-                                        res.status(200).send({message: bool});
+                                        //bool = true;
+                                        //res.status(200).send({message: bool});
+                                        token.tokenRenovation(userUpdate, nameOfOperation, res); //Guardar token en la base de datos
                                     }
                                 }
                             });
@@ -657,8 +669,9 @@ function updateTUser(req, res){
                             if(!userUpdate){
                                 res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
                             }else{
-                                bool = true;
-                                res.status(200).send({message: bool});
+                                //bool = true;
+                                //res.status(200).send({message: bool});
+                                token.tokenRenovation(userUpdate, nameOfOperation, res); //Guardar token en la base de datos
                             }
                         }
                     });
@@ -671,8 +684,9 @@ function updateTUser(req, res){
                         if(!userUpdate){
                             res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
                         }else{
-                            bool = true;
-                            res.status(200).send({message: bool});
+                            //bool = true;
+                            //res.status(200).send({message: bool});
+                            token.tokenRenovation(userUpdate, nameOfOperation, res); //Guardar token en la base de datos
                         }
                     }
                 });
@@ -722,24 +736,39 @@ function deleteMe(req, res){
         var bool = false;
         if(typeOfOperationOK == true && id == payload._id && !req.body.email){
             //Pedir contraseña para confimar cambio
-            User.findOneAndRemove({ email: id }, (err, userUpdate) => {
-                    if(err){
-                        res.status(500).send({message: 'Error al actualizar los datos'});
+            User.findOneAndRemove({ email: id }, (err, userDelete) => {
+                if(err){
+                    res.status(500).send({message: 'Error al eliminar los datos'});
+                }else{
+                    if(!userDelete){
+                        //res.status(404).send({message: 'El dato no existe y no ha sido eliminado'});
+                        Consumer.findOneAndRemove({ email: id }, (err, userDelete) => {
+                            if(err){
+                                res.status(500).send({message: 'Error al eliminar los datos'});
+                            }else{
+                                if(!userDelete){
+                                    res.status(404).send({message: 'El dato no existe y no ha sido eliminado'});
+                                }else{
+                                    //bool = true;
+                                    //res.status(200).send({message: bool});
+                                    token.tokenDelete(userDelete, nameOfOperation, res);
+                                }
+                            }
+                        });
                     }else{
-                        if(!userUpdate){
-                            res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
-                        }else{
-                            bool = true;
-                            res.status(200).send({message: bool});
-                        }
+                        //bool = true;
+                        //res.status(200).send({message: bool});
+                        token.tokenDelete(userDelete, nameOfOperation, res);
+
                     }
-                });
+                }
+            });
         }else if(typeOfOperationOK == false){
             res.status(404).send({message: 'No tienes permisos para eliminar tus datos'});
         }else if(id != payload._id) {
             res.status(404).send({message: 'Los ID´s no coinciden'});
         }else if(req.body.email){
-            res.status(404).send({message: 'No puedes actualizar tu email - contacta con el desarrollador'});
+            res.status(404).send({message: 'No puedes eliminar tu email - contacta con el desarrollador'});
         }else{
             res.status(404).send({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - ID (users) : '+id +' - ID (token): '+payload._id+' - Email: '+req.body.email });
         }
@@ -769,22 +798,23 @@ function deleteAdministrator(req, res){
                 }else {
                     if(typeOfOperationOK == true && !req.body.email){
                         //Pedir contraseña para confimar cambio
-                            User.findOneAndRemove({ email: id }, (err, userUpdate) => {
+                            User.findOneAndRemove({ email: id }, (err, userDelete) => {
                                 if(err){
-                                    res.status(500).send({message: 'Error al actualizar los datos'});
+                                    res.status(500).send({message: 'Error al eliminar los datos'});
                                 }else{
-                                    if(!userUpdate){
-                                        res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
+                                    if(!userDelete){
+                                        res.status(404).send({message: 'El dato no existe y no ha sido eliminado'});
                                     }else{
-                                        bool = true;
-                                        res.status(200).send({message: bool});
+                                        //bool = true;
+                                        //res.status(200).send({message: bool});
+                                        token.tokenDelete(userDelete, nameOfOperation, res);
                                     }
                                 }
                             });
                     }else if(typeOfOperationOK == false){
                         res.status(404).send({message: 'No tienes permisos para eliminar administradores'});
                     }else if(req.body.email){
-                        res.status(404).send({message: 'No puedes actualizar el email - contacta con el desarrollador'});
+                        res.status(404).send({message: 'No puedes eliminar el email - contacta con el desarrollador'});
                     }else{
                         res.status(404).send({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - ID (users) : '+id +' - ID (token): '+payload._id+' - Email: '+req.body.email });
                     }
@@ -806,22 +836,23 @@ function deleteTUser(req, res){
         var query = { email: id };
         if(typeOfOperationOK == true && !req.body.email){
             //Pedir contraseña para confimar cambio
-            User.findOneAndRemove({ email: id }, (err, userUpdate) => {
+            User.findOneAndRemove({ email: id }, (err, userDelete) => {
                 if(err){
-                    res.status(500).send({message: 'Error al actualizar los datos'});
+                    res.status(500).send({message: 'Error al eliminar los datos'});
                 }else{
-                    if(!userUpdate){
-                        res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
+                    if(!userDelete){
+                        res.status(404).send({message: 'El dato no existe y no ha sido eliminado'});
                     }else{
-                        bool = true;
-                        res.status(200).send({message: bool});
+                        //bool = true;
+                        //res.status(200).send({message: bool});
+                        token.tokenDelete(userDelete, nameOfOperation, res);
                     }
                 }
             });
         }else if(typeOfOperationOK == false){
             res.status(404).send({message: 'No tienes permisos para eliminar usuarios normales'});
         }else if(req.body.email){
-            res.status(404).send({message: 'No puedes actualizar el email - contacta con el desarrollador'});
+            res.status(404).send({message: 'No puedes eliminar el email - contacta con el desarrollador'});
         }else{
             res.status(404).send({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - ID (users) : '+id +' - ID (token): '+payload._id+' - Email: '+req.body.email });
         }
@@ -839,7 +870,32 @@ function getUser(req, res){
             res.status(500).send({message: 'Error en la petición'});
         }else{
             if(!user){
-                res.status(404).send({message: 'El dato no existe'});
+                //res.status(404).send({message: 'El dato no existe'});
+                Consumer.findOne({email: userId}, (err, user) => {
+                    if(err){
+                        res.status(500).send({message: 'Error en la petición'});
+                    }else{
+                        if(!user){
+                            //res.status(404).send({message: 'El dato no existe'});
+                        }else{
+                            nameOfOperation = 'readMe';
+                            permit.hasAccess(token, typeOfOperation, nameOfOperation) //Antes de verificar los permisos verificar el dueño del token
+                            .then(typeOfOperationOK => {
+                                //console.log(typeOfOperationOK);
+                                if(typeOfOperationOK == true){
+                                    res.status(200).send({ user });
+                                }else{
+                                    res.status(404).send({message: 'No tienes permisos para ver estos datos'});
+                                }
+                            })
+                            .catch(err => {
+                                // never goes here
+                                console.log(err);
+                                return res.status(550).json(err);
+                            });
+                        }
+                    }
+                });
             }else{
                 if(payload._id == req.params.id){
                     nameOfOperation = 'readMe';
@@ -848,7 +904,7 @@ function getUser(req, res){
                 }else {
                     nameOfOperation = 'readTUser';
                 }
-                permit.hasAccess(token, typeOfOperation, nameOfOperation)
+                permit.hasAccess(token, typeOfOperation, nameOfOperation) //Antes de verificar los permisos verificar el dueño del token
                 .then(typeOfOperationOK => {
                     //console.log(typeOfOperationOK);
                     if(typeOfOperationOK == true){
@@ -866,6 +922,7 @@ function getUser(req, res){
         }
     });
 }
+
 function getUsers(req, res){
     var payload = service_jwt.decodeToken(req.headers.authorization);
     if(req.params.page){
@@ -924,8 +981,171 @@ function getUsers(req, res){
                  }
              }
          }
-     });
+    });
 }
+
+function registerUser(req, res){
+    var email = req.body.email;
+    Consumer.findOne({email: email.toLowerCase()}, (err, emailStored) => {
+        if(err){
+            res.status(500).send({ message: 'Error en la petición' });
+        }else{
+            if(!emailStored){
+                var ip = req.header('x-forwarded-for') || req.connection.remoteAddress;
+                var dp = '{ "createAdministrator": '+false+', "createTUser": '+false+', "updateMe": '+true+', "updateAdministrator": '+false+', "updateTUser": '+false+', "deleteMe": '+true+', "deleteAdministrator": '+false+', "deleteTUser": '+false+', "readMe": '+true+', "readAdministrator": '+false+', "readTUser": '+false+', "loginUser": '+true+' }';
+                var consumer = new Consumer();
+
+                consumer.email = req.body.email.toLowerCase();
+                consumer.password = req.body.password;
+                consumer.nameOfUser = req.body.nameOfUser;
+                consumer.surnameP = req.body.surnameP;
+                consumer.surnameM = req.body.surnameM;
+                consumer.ip = ip;
+                consumer.typeOfUser = 'Consumer';
+                consumer.dp = dp;
+                if(req.body.password){
+                    //Encriptar contraseñas
+                    bcrypt.hash(req.body.password, null, null, function(err, hash){
+                        consumer.password = hash;
+                        if(consumer.email != null && consumer.password != null && consumer.nameOfUser != null && consumer.surnameM != null && consumer.surnameM != null){
+                            //Guardar usuario
+                            consumer.save((err, userStored) => {
+                                if(err) {
+                                    console.log(err);
+                                    res.status(500).json({ message: 'Error al guardar los datos' });
+                                }else {
+                                    if(!userStored) {
+                                        res.status(404).json({ message: 'El dato no ha sido guardado' });
+                                    }else {
+                                        var generatedToken = service_jwt.createToken(consumer); //Guardar token en la base de datos
+                                        token.tokenCreation(generatedToken, consumer.email);
+                                        req.body.typeOfOperation = 'authentication';
+                                        req.body.nameOfOperation = 'loginUser';
+                                        token.authenticateConsumers(req, res);
+                                    }
+                                }
+                            });
+                        }else {
+                            res.status(200).json({ message: 'Rellena todos los campos' });
+                        }
+                    });
+                }else {
+                    res.status(200).json({ message: 'Introduce la contraseña' });
+                }
+            }else{
+                console.log("Entré aquí - "+emailStored);
+                res.status(404).send({ message: 'Ya existe un usuario con el email: '+email });
+            }
+        }
+    });
+    
+}
+
+function updateConsumer(req, res){
+    var tokeninitial = req.headers.authorization;
+    var typeOfOperation = req.body.typeOfOperation;
+    var nameOfOperation = req.body.nameOfOperation;
+    permit.hasAccess(tokeninitial, typeOfOperation, nameOfOperation)
+    .then(typeOfOperationOK => {
+        tokeninitial.replace(/['"]+/g, '');
+        //var payload = decodeToken(tokeninitial);
+        var payload = service_jwt.decodeToken(tokeninitial);
+        var id = req.params.id.toLowerCase(); //CAMBIAR ESTE DATO POR LA VARIABLE QUE CONTENDRÁ LOS ID's DE LOS USUARIOS REGISTRADOS
+        if(typeOfOperationOK == true && id == payload._id && !req.body.email && !req.body.dp){
+            //Pedir contraseña para confimar cambio
+            if(req.body.password){
+                bcrypt.hash(req.body.password, null, null, function(err, hash){
+                    req.body.password = hash;
+                    Consumer.findOneAndUpdate({ email: id }, {password: req.body.password, nameOfUser: req.body.nameOfUser, surnameP: req.body.surnameP, surnameM: req.body.surnameM}, (err, userUpdate) => {
+                        if(err){
+                            res.status(500).send({message: 'Error al actualizar los datos'});
+                        }else{
+                            if(!userUpdate){
+                                res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
+                            }else{
+                                token.tokenRenovation(userUpdate, nameOfOperation, res); //Guardar token en la base de datos
+                            }
+                        }
+                    });
+                });
+            }else{
+                Consumer.findOneAndUpdate({ email: id }, {nameOfUser: req.body.nameOfUser, surnameP: req.body.surnameP, surnameM: req.body.surnameM}, (err, userUpdate) => {
+                    if(err){
+                        res.status(500).send({message: 'Error al actualizar los datos'});
+                    }else{
+                        if(!userUpdate){
+                            res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
+                        }else{
+                            token.tokenRenovation(userUpdate, nameOfOperation, res); //Guardar token en la base de datos
+                        }
+                    }
+                });
+            }
+        }else if(typeOfOperationOK == false){
+            res.status(404).send({message: 'No tienes permisos para actualizar tus datos'});
+        }else if(id != payload._id) {
+            res.status(404).send({message: 'Los ID´s no coinciden'});
+        }else if(req.body.email){
+            res.status(404).send({message: 'No puedes actualizar tu email - contacta con el desarrollador'});
+        }else if(req.body.dp){
+            res.status(404).send({message: 'No puedes actualizar tus permisos'});
+        }else if(req.body.hashX != hashX){
+            return res.status(404).json({ message: 'HashX no coincide: '+hashX });
+        }else{
+            return res.status(404).json({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - initialToken (users): '+user.initialToken+' - Token (audit): '+auditData.Token+' - hashX (client): '+req.body.hashX+' - hashX(api): '+hashX });
+        }
+    })
+    .catch(err => {
+        // never goes here
+        console.log(err);
+        return res.status(550).json(err);
+    });
+}
+/*
+function deleteConsumer(req, res){
+    var tokeninitial = req.headers.authorization;
+    var typeOfOperation = req.body.typeOfOperation;
+    var nameOfOperation = req.body.nameOfOperation;
+    permit.hasAccess(tokeninitial, typeOfOperation, nameOfOperation)
+    .then(typeOfOperationOK => {
+        //console.log(typeOfOperationOK);
+        tokeninitial.replace(/['"]+/g, '');
+        //var payload = decodeToken(tokeninitial);
+        var payload = service_jwt.decodeToken(tokeninitial);
+        var id = req.params.id.toLowerCase(); //CAMBIAR ESTE DATO POR LA VARIABLE QUE CONTENDRÁ LOS ID's DE LOS USUARIOS REGISTRADOS
+        var bool = false;
+        if(typeOfOperationOK == true && id == payload._id && !req.body.email){
+            //Pedir contraseña para confimar cambio
+            Consumer.findOneAndRemove({ email: id }, (err, userDelete) => {
+                    if(err){
+                        res.status(500).send({message: 'Error al actualizar los datos'});
+                    }else{
+                        if(!userDelete){
+                            res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
+                        }else{
+                            bool = true;
+                            res.status(200).send({message: bool});
+                        }
+                    }
+                });
+        }else if(typeOfOperationOK == false){
+            res.status(404).send({message: 'No tienes permisos para eliminar tus datos'});
+        }else if(id != payload._id) {
+            res.status(404).send({message: 'Los ID´s no coinciden'});
+        }else if(req.body.email){
+            res.status(404).send({message: 'No puedes actualizar tu email - contacta con el desarrollador'});
+        }else{
+            res.status(404).send({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - ID (users) : '+id +' - ID (token): '+payload._id+' - Email: '+req.body.email });
+        }
+    })
+    .catch(err => {
+        // never goes here
+        console.log(err);
+        return res.status(550).json(err);
+    });
+}
+*/
+
 //--------------------------------------------New--------------------------------------------
 
 module.exports = {
@@ -933,5 +1153,6 @@ module.exports = {
     userUpdate,
     userDelete,
     getUser,
-    getUsers
+    getUsers,
+    registerUser
 };

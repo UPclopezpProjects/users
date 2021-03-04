@@ -6,6 +6,7 @@ var service_jwt = require('../services/jwt');
 var moment = require('moment');
 
 function hasAccess(token, typeOfOperation, nameOfOperation){
+	console.log(token, typeOfOperation, nameOfOperation);
 	var token = token.replace(/['"]+/g, '');
 	//console.log(token);
 	var payload = service_jwt.decodeToken(token);
@@ -44,6 +45,8 @@ function hasAccess(token, typeOfOperation, nameOfOperation){
 				userPermition = permitionJSON.Administrator;
 			}else if(userType == 'TUser' || userType == 'Merchant' || userType == 'Carrier' || userType == 'Acopio' || userType == 'Productor'){ //Se acumulan los tipos de usuarios
 				userPermition = permitionJSON.TUser;
+			}else if(userType == 'Consumer'){
+				userPermition = permitionJSON.Consumer;
 			}else{
 				return 'message: No existe este tipo de usuario';
 			}

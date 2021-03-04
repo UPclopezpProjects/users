@@ -73,8 +73,10 @@ router.post('/login', function(req, res){
 router.get('/userDetails/:id', UserController.getUser);
 router.get('/usersDetails/:page?', UserController.getUsers);
 router.post('/userCreation', UserController.userCreate);
+router.post('/register', UserController.registerUser); //Consumer
 router.put('/userUpdate/:id', UserController.userUpdate);
 router.delete('/userDelete/:id', UserController.userDelete);
+
 
 //Authentication
 router.post('/login', TokenController.authenticate);

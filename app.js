@@ -21,6 +21,9 @@ var usersRouter = require('./routes/users');
 
 var app = express();
 
+//IP
+app.set('trust proxy', true);
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
@@ -72,7 +75,7 @@ app.use(function(err, req, res, next) {
 });
 
 var mongoose = require('mongoose');
-var mongoDB = 'mongodb://172.20.0.1:27017/users';
+var mongoDB = 'mongodb://172.18.0.2:27017/users';
 
 var port = process.env.PORT || 3001;
 
