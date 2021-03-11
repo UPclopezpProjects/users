@@ -8,6 +8,7 @@ var bcrypt = require('bcrypt-nodejs');
 var jwt = require('jwt-simple');
 var md5 = require('md5');
 var mongoosePaginate = require('mongoose-pagination');
+var moment = require('moment');
 //var mongoosePaginatee = require('mongoose-paginate-v2');
 
 var service_jwt = require('../services/jwt');
@@ -118,13 +119,22 @@ function createRoot(req, res){
   var ip = req.header('x-forwarded-for') || req.connection.remoteAddress;
   if (req.headers.authorization) {
     var initialToken = req.headers.authorization;
+    var payload = service_jwt.decodeToken(initialToken);
+    var valid = moment().unix();
+    var t;
     serviceInit(req, initialToken, function(data, err) {
       if (err) {
         res.status(500).send({ message: 'Error en la petición' });
       }else {
               var user = new User();
               var auditData = data;
-
+              if(payload.life <= valid){
+      					t = false;
+      					console.log("Token caducado");
+      				}else{
+      					t = true;
+      					console.log("Token vigente");
+      				}
               user.email = req.body.email.toLowerCase();
               user.surnameA = req.body.surnameA;
               user.surnameB = req.body.surnameB;
@@ -170,7 +180,7 @@ function createRoot(req, res){
                       //Encriptar contraseñas
                       bcrypt.hash(req.body.password, null, null, function(err, hash){
                           user.password = hash;
-                          if(user.email != null && user.password != null && user.addressContract != null && user.addressTransaction != null && user.typeOfUser != null && user.initialToken != null){
+                          if(user.email != null && user.password != null && user.addressContract != null && user.addressTransaction != null && user.typeOfUser != null && user.initialToken != null && t == true){
                               //Guardar usuario
                               user.save((err, userStored) => {
                                   if(err) {
@@ -179,8 +189,13 @@ function createRoot(req, res){
                                       if(!userStored) {
                                           res.status(404).send({ message: 'El dato no ha sido guardado' });
                                       }else{
-                                          Token.remove({ email: 'email for initialToken' });
-                                          console.log(f);
+                                          Token.deleteMany({ email: 'email for initialToken' })
+                                          .then(function(){
+                                              console.log("Data deleted"); // Success
+                                          })
+                                          .catch(function(error){
+                                              console.log(error); // Failure
+                                          });
                                           //var generatedToken = service_jwt.createToken(user); //Guardar token en la base de datos
                                           token.tokenCreation(user.initialToken, user.email); //Guarda token en la base de datos
                                           /*res.status(200).send({
@@ -196,8 +211,10 @@ function createRoot(req, res){
                                       }
                                   }
                               });
+                          }else if (t == false) {
+                            res.status(200).send({ message: 'El token ha caducado' });
                           }else {
-                              res.status(200).send({ message: 'Rellena todos los campos' });
+                            res.status(200).send({ message: 'Rellena todos los campos' });
                           }
                       });
                   }else {

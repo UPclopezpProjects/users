@@ -35,8 +35,8 @@ function authenticate(req, res){
 	    		res.status(500).send({message: 'Error en la petición'});
 	    	}else{
 	    		if(!user){
-	    			authenticateConsumers(req, res);
-	    			//res.status(404).send({message: 'El usuario no existe'});
+	    			//authenticateConsumers(req, res);
+	    			res.status(404).send({message: 'El usuario no existe'});
 	    		}else{
 	    			//Comprobar la contraseña
 	    			bcrypt.compare(password, user.password, function(err, check){
@@ -245,9 +245,8 @@ function tokenDelete(userDelete, nameOfOperation, res){
 }
 
 function tokenIsValid(req, res){
-    var token = req.body.generatedToken.replace(/['"]+/g, '');
+  var token = req.body.generatedToken.replace(/['"]+/g, '');
 	var payload = decodeToken(token);
-
 	var query = { generatedToken: token };
 	var valid = moment().unix();
 

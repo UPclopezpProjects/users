@@ -24,7 +24,7 @@ function sendEmail(email){
             from: 'pruebas.postman.residencia@gmail.com',
             to: email,
             subject: 'Email confirmation - AvocadoPath',
-            text: 'Please click: http://localhost:3001/getEmail/?code='+code+'&email='+email+''
+            text: 'Please click: http://localhost:5000/getEmail/?code='+code+'&email='+email+''
         };
 
         transporter.sendMail(mailOptions, function(error, info){
@@ -51,45 +51,45 @@ function sendEmail(email){
 }
 
 function getEmail(req, res){
-    var id = req.query.code;
-    var email = req.query.email;
-    var bool = false;
-    Confirmation.findOneAndRemove({ email: email, code: id }, (err, confirmationDelete) => {
-        if(err){
-            res.status(500).send({message: 'Error al eliminar los datos'});
-        }else{
-            if(!confirmationDelete){
-              User.findOne({ email: email, typeOfUser: 'Consumer' }, (err, userStored) => {
-                if(err) {
-                  res.status(500).send({ message: 'Error en la petición' });
-                }else {
-                  if(!userStored) {
-                    res.status(404).send({message: 'El dato no existe'});
-                  }else {
-                    if(userStored.status == 'true'){
-                      res.status(200).send({message: 'Ya haz confirmado tu dirección email'});
-                    }else {
-                      res.status(200).send({message: 'No deberías estar acá'});
-                    }
-                  }
-                }
-              });
-            }else{
-                bool = true;
-                User.findOneAndUpdate({ email: email, typeOfUser: 'Consumer' }, {status: bool}, (err, userUpdate) => {
-                    if(err){
-                        res.status(500).send({message: 'Error al actualizar los datos'});
-                    }else{
-                        if(!userUpdate){
-                            res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
-                        }else{
-                          res.status(200).send({message: bool});
-                        }
-                    }
-                });
+  var id = req.query.code;
+  var email = req.query.email;
+  var bool = false;
+  Confirmation.findOneAndRemove({ email: email, code: id }, (err, confirmationDelete) => {
+    if(err){
+      res.status(500).send({message: 'Error al eliminar los datos'});
+    }else{
+      if(!confirmationDelete){
+        User.findOne({ email: email, typeOfUser: 'Consumer' }, (err, userStored) => {
+          if(err) {
+            res.status(500).send({ message: 'Error en la petición' });
+          }else {
+            if(!userStored) {
+              res.status(404).send({message: 'El dato no existe'});
+            }else {
+              if(userStored.status == 'true'){
+                res.status(200).send({message: 'Ya haz confirmado tu dirección email'});
+              }else {
+                res.status(200).send({message: 'No deberías estar acá'});
+              }
             }
-        }
-    });
+          }
+        });
+      }else{
+        bool = true;
+        User.findOneAndUpdate({ email: email, typeOfUser: 'Consumer' }, {status: bool}, (err, userUpdate) => {
+          if(err){
+            res.status(500).send({message: 'Error al actualizar los datos'});
+          }else{
+            if(!userUpdate){
+              res.status(404).send({message: 'El dato no existe y no ha sido actualizado'});
+            }else{
+              res.status(200).send({message: bool});
+            }
+          }
+        });
+      }
+    }
+  });
 }
 
 module.exports = {

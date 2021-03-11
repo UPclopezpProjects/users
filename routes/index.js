@@ -80,25 +80,27 @@ router.post('/login', function(req, res){
 router.get('/userDetails/:id', UserController.getUser);
 router.get('/usersDetails/:page?', UserController.getUsers);
 router.post('/userCreation', UserController.userCreate);
-router.post('/register', UserController.registerUser); //Consumer
+//router.post('/register', UserController.registerUser); //Consumer
 router.put('/userUpdate/:id', UserController.userUpdate);
 router.delete('/userDelete/:id', UserController.userDelete);
 
 
 //Authentication
 router.get('/getInitialToken', function (req, res) {
-	validTime = moment().unix();
+	var initialToken = service_jwt.initialToken(20); //Guardar token en la base de datos
+	var payload = service_jwt.decodeToken(initialToken);
+	validTime = payload.creation;
 	if (count == true) {
 		if (validTime > expiredTime) {
-			Token.remove({email: 'email for initialToken'}, (err, tokenDelete) => {
-				if(err){
-					res.status(500).send({message: 'Error en la petición'});
-				}else{
-					expiredTime = moment().add(5000, 'ms').unix();
-					var initialToken = service_jwt.initialToken(20); //Guardar token en la base de datos
+			Token.deleteMany({email: 'email for initialToken'})
+			.then(function(){
+					console.log("Data deleted"); // Success
+					count = false;
 					TokenController.tokenCreation(initialToken, 'email for initialToken');
 					res.status(200).send({ message: true, token: initialToken });
-				}
+			})
+			.catch(function(error){
+					console.log(error); // Failure
 			});
 		}else {
 			//if (req.session.ID != req.sessionID) {
@@ -111,8 +113,7 @@ router.get('/getInitialToken', function (req, res) {
 		//req.session.ID = req.sessionID;
 		//console.log(req.session.ID);
 		count = true;
-		expiredTime = moment().add(5000, 'ms').unix();
-		var initialToken = service_jwt.initialToken(20); //Guardar token en la base de datos
+		expiredTime = payload.life;
 		TokenController.tokenCreation(initialToken, 'email for initialToken');
 		res.status(200).send({ message: true, token: initialToken });
 	}

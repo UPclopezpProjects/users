@@ -6,9 +6,9 @@ var algorithm = 'HS256';
 
 function initialToken(num){
 	var payload = {
-		key: Math.random*num,
+		key: Math.random()*num,
 		creation: moment().unix(), //Momento de creación del token (fecha y hora exacta)
-		life: moment().add(7, 'd').unix() //Agrega 7 días en tiempo UNIX
+		life: moment().add(10000, 'ms').unix() //Agrega 7 días en tiempo UNIX
 	};
 	return jwt.encode(payload, secret, algorithm);
 };
