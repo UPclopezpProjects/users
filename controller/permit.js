@@ -21,15 +21,15 @@ function hasAccess(token, typeOfOperation, nameOfOperation){
 	var userPermition = null;
 
 	if(token == null || token == undefined || token == ''){
-		return 'message: La petición no tiene la cabecera';
+		return res.status(500).json({message: "La petición no tiene cabecera: "+token});
 	}
 	try{
 		if(payload.life <= moment().unix()){
-			return 'message: El token ha expirado';
+			return res.status(500).json({message: "El token ha expirado: "+payload.life});
 		}
 	}catch(ex){
 		console.log("Ex: "+ex);
-		return 'message: Token no válido';
+		return res.status(500).json({message: "Token no válido: "+ex});
 	}
 
 	var query = { typeOfOperation: typeOfOperation, nameOfOperation: nameOfOperation};

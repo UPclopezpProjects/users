@@ -62,8 +62,10 @@ function authenticate(req, res){
 					    							res.status(200).send({ message: true, user: user, token: temporalToken });
 												}else if(typeOfOperationOK == false){
 					    							res.status(200).send({ message: false });
-												}else if(user.status == 'false'){
+												}else if(user.status == 'false' && user.typeOfUser != 'Consumer'){
 					    							res.status(200).send({ message: null });
+												}else if(user.status == 'false' && user.typeOfUser == 'Consumer'){
+					    							res.status(200).send({ message: true, user: user, token: temporalToken });
 												}
 											})
 											.catch(err => {
@@ -150,11 +152,11 @@ function tokenCreation(newToken, email){
 	token.generatedToken = newToken;
 	token.email = email;
 
-	token.save((err, tokentStored) => {
+	token.save((err, tokenStored) => {
 		if(err){
 			return 'message: Error al guardar los datos';
 		}else{
-			if(!tokentStored){
+			if(!tokenStored){
 				return 'message: El dato no ha sido guardado';
 			}else{
 				console.log("Token guardado");

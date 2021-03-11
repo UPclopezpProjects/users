@@ -1,4 +1,7 @@
 //
+global.validTime = 0;
+global.expiredTime = 0;
+global.count = false;
 global.host = 'host.docker.internal'; //host.docker.internal
 global.port = {
   audit: '3000',
@@ -36,9 +39,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(session({
-    secret: '12345',
-    resave: false,
-    saveUninitialized: true
+  secret: 'foo',
+  resave: true,
+  saveUninitialized: true,
+  cookie: {
+    expires: 1000*60
+  }
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -69,13 +75,14 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  var resp = {message:"error de users - :C"};
+  var resp = {message:"error de users - :C | "+err};
   res.send(resp);
   //res.render('error');
 });
 
 var mongoose = require('mongoose');
-var mongoDB = 'mongodb://172.18.0.2:27017/users';
+//var mongoDB = 'mongodb://172.18.0.1:27017/users';
+var mongoDB = 'mongodb://host.docker.internal:27017/users';
 
 var port = process.env.PORT || 3001;
 
@@ -97,4 +104,5 @@ mongoose.connect(mongoDB, {useFindAndModify: false, useUnifiedTopology: true, us
 mongoose.Promise = global.Promise;
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+
 module.exports = app;

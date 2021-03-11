@@ -1,6 +1,7 @@
 //
-var User = require("../models/Users");
-var Consumer = require("../models/Consumers");
+var User = require('../models/Users');
+var Token = require('../models/Tokens');
+var Consumer = require('../models/Consumers');
 
 var axios = require('axios');
 var bcrypt = require('bcrypt-nodejs');
@@ -10,8 +11,10 @@ var mongoosePaginate = require('mongoose-pagination');
 //var mongoosePaginatee = require('mongoose-paginate-v2');
 
 var service_jwt = require('../services/jwt');
-var token = require("./token");
-var permit = require("./permit");
+var confirmation = require('../services/email');
+var token = require('./token');
+var permit = require('./permit');
+
 //
 
 
@@ -55,6 +58,7 @@ function userCreate(req, res) {
         case "carrier":
         case "acopio":
         case "productor":
+        case "consumer":
             checkEmail(req, res, typeOfUser);
             break;
         default:
@@ -95,6 +99,9 @@ function checkEmail(req, res, typeOfUser){
                     case "productor":
                         createTUser(req, res);
                         break;
+                    case "consumer":
+                        createConsumer(req, res);
+                        break;
                     default:
                         res.status(404).send({ message: 'Default case (checkEmail) if exists a emergency' });
                         break;
@@ -108,96 +115,109 @@ function checkEmail(req, res, typeOfUser){
 }
 
 function createRoot(req, res){
-    var initialToken = service_jwt.createToken(req.body);
+  var ip = req.header('x-forwarded-for') || req.connection.remoteAddress;
+  if (req.headers.authorization) {
+    var initialToken = req.headers.authorization;
     serviceInit(req, initialToken, function(data, err) {
-        if (err) {
-            res.status(500).send({ message: 'Error en la petición' });
-        }else {
-            var user = new User();
-            var auditData = data;
+      if (err) {
+        res.status(500).send({ message: 'Error en la petición' });
+      }else {
+              var user = new User();
+              var auditData = data;
 
-            user.email = req.body.email.toLowerCase();
-            user.typeOfUser = req.body.typeOfUser;
-            user.initialToken = initialToken;
-            user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
-            user.addressU = req.body.addressU;
-            user.addressContract =  auditData.y.addCont;
-            user.addressTransaction = auditData.y.addTran;
-            user.nameOfUser = req.body.nameOfUser;
-            user.status = req.body.status;
-            user.creationDate = req.body.creationDate;
+              user.email = req.body.email.toLowerCase();
+              user.surnameA = req.body.surnameA;
+              user.surnameB = req.body.surnameB;
+              user.nameOfUser = req.body.nameOfUser;
+              user.typeOfUser = req.body.typeOfUser;
+              user.ip = ip;
+              user.status = req.body.status;
+              user.creationDate = req.body.creationDate;
+              user.initialToken = initialToken;
+              user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
+              user.addressU = req.body.addressU;
+              user.addressContract =  auditData.addCont;
+              user.addressTransaction = auditData.addTran;
 
 
-            //Pruebas con MD5
-            var jsonData = {
-                email: req.body.email.toLowerCase(),
-                password: req.body.password,
-                typeOfUser: req.body.typeOfUser,
-                initialToken: req.body.initialToken,
-                typeOfOperation: req.body.typeOfOperation,
-                nameOfOperation: req.body.nameOfOperation,
-                addressU: req.body.addressU,
-                nameOfUser: req.body.nameOfUser,
-                creationDate: req.body.creationDate,
-                status: req.body.status,
-                dp: req.body.dp
-            };
-            var hashX = md5(JSON.stringify(jsonData));
-            /*
-            if(req.body.hashX == hashX){
-                console.log("MD5 correcto");
-            }else{
-                console.log("MD5 incorrecto");
-            }*/
+              //Pruebas con MD5
+              var jsonData = {
+                  email: req.body.email.toLowerCase(),
+                  password: req.body.password,
+                  surnameA: req.body.surnameA,
+                  surnameB: req.body.surnameB,
+                  nameOfUser: req.body.nameOfUser,
+                  typeOfUser: req.body.typeOfUser,
+                  status: req.body.status,
+                  creationDate: req.body.creationDate,
+                  initialToken: req.body.initialToken,
+                  dp: req.body.dp,
+                  addressU: req.body.addressU,
+                  typeOfOperation: req.body.typeOfOperation,
+                  nameOfOperation: req.body.nameOfOperation,
+              };
+              var hashX = md5(JSON.stringify(jsonData));
+              /*
+              if(req.body.hashX == hashX){
+                  console.log("MD5 correcto");
+              }else{
+                  console.log("MD5 incorrecto");
+              }*/
 
-            if(user.initialToken == auditData.Token && req.body.hashX == hashX){
-            //REVISAR SI EXISTE EL TIPO DE OPERACIÓN QUE SE ESTÁ EJECUTANDO
-                if(req.body.password){
-                    //Encriptar contraseñas
-                    bcrypt.hash(req.body.password, null, null, function(err, hash){
-                        user.password = hash;
-                        if(user.email != null && user.password != null && user.addressContract != null && user.addressTransaction != null && user.typeOfUser != null && user.initialToken != null){
-                            //Guardar usuario
-                            user.save((err, userStored) => {
-                                if(err) {
-                                    res.status(500).send({ message: 'Error al guardar los datos' });
-                                }else{
-                                    if(!userStored) {
-                                        res.status(404).send({ message: 'El dato no ha sido guardado' });
-                                    }else{
-                                        //var generatedToken = service_jwt.createToken(user); //Guardar token en la base de datos
-                                        token.tokenCreation(user.initialToken, user.email); //Guarda token en la base de datos
-                                        /*res.status(200).send({
-                                            message: userStored
-                                        });*/
-                                        req.body.typeOfOperation = 'authentication';
-                                        req.body.nameOfOperation = 'loginUser';
-                                        token.authenticate(req, res);
-                                        /*res.status(200).send({
-                                            user: userStored,
-                                            token: initialToken
-                                        });*/
-                                    }
-                                }
-                            });
-                        }else {
-                            res.status(200).send({ message: 'Rellena todos los campos' });
-                        }
-                    });
-                }else {
-                    res.status(200).send({ message: 'Introduce la contraseña' });
-                }
-            }else if(user.initialToken != auditData.Token){
-                res.status(404).send({ message: 'Errores en los datos initialToken (users): '+user.initialToken+' - Token (audit): '+auditData.Token });
-                //res.status(404).send({ message: 'No tienes permisos para crear usuarios de tipo administrador' });
-            }else if(req.body.hashX != hashX){
-                res.status(404).json({ message: 'Errores en los datos hashX (client): '+req.body.hashX+' - hashX(api): '+hashX });
-            }
-        }
-    });
+              if(user.initialToken == auditData.Token && req.body.hashX == hashX){
+              //REVISAR SI EXISTE EL TIPO DE OPERACIÓN QUE SE ESTÁ EJECUTANDO
+                  if(req.body.password){
+                      //Encriptar contraseñas
+                      bcrypt.hash(req.body.password, null, null, function(err, hash){
+                          user.password = hash;
+                          if(user.email != null && user.password != null && user.addressContract != null && user.addressTransaction != null && user.typeOfUser != null && user.initialToken != null){
+                              //Guardar usuario
+                              user.save((err, userStored) => {
+                                  if(err) {
+                                      res.status(500).send({ message: 'Error al guardar los datos' });
+                                  }else{
+                                      if(!userStored) {
+                                          res.status(404).send({ message: 'El dato no ha sido guardado' });
+                                      }else{
+                                          Token.remove({ email: 'email for initialToken' });
+                                          console.log(f);
+                                          //var generatedToken = service_jwt.createToken(user); //Guardar token en la base de datos
+                                          token.tokenCreation(user.initialToken, user.email); //Guarda token en la base de datos
+                                          /*res.status(200).send({
+                                              message: userStored
+                                          });*/
+                                          req.body.typeOfOperation = 'authentication';
+                                          req.body.nameOfOperation = 'loginUser';
+                                          token.authenticate(req, res);
+                                          /*res.status(200).send({
+                                              user: userStored,
+                                              token: initialToken
+                                          });*/
+                                      }
+                                  }
+                              });
+                          }else {
+                              res.status(200).send({ message: 'Rellena todos los campos' });
+                          }
+                      });
+                  }else {
+                      res.status(200).send({ message: 'Introduce la contraseña' });
+                  }
+              }else if(user.initialToken != auditData.Token){
+                  res.status(404).send({ message: 'Errores en los datos initialToken (users): '+user.initialToken+' - Token (audit): '+auditData.Token });
+                  //res.status(404).send({ message: 'No tienes permisos para crear usuarios de tipo administrador' });
+              }else if(req.body.hashX != hashX){
+                  res.status(404).json({ message: 'Errores en los datos hashX (client): '+req.body.hashX+' - hashX(api): '+hashX });
+              }
+          }
+      });
+  }else {
+    res.status(200).send({ message: 'No hay un token inicial' });
+  }
 }
 
 function createAdministrator(req, res){
+    var ip = req.header('x-forwarded-for') || req.connection.remoteAddress;
     serviceInit(req, req.headers.authorization, function(data, err) {
         if (err) {
             res.status(500).send({ message: 'Error en la petición' });
@@ -206,17 +226,18 @@ function createAdministrator(req, res){
             var auditData = data;
 
             user.email = req.body.email.toLowerCase();
+            user.surnameA = req.body.surnameA;
+            user.surnameB = req.body.surnameB;
+            user.nameOfUser = req.body.nameOfUser;
             user.typeOfUser = req.body.typeOfUser;
-            user.initialToken = req.body.initialToken;
+            user.ip = ip;
+            user.status = req.body.status;
+            user.creationDate = req.body.creationDate;
+            user.initialToken = req.headers.authorization;
             user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
             user.addressU = req.body.addressU;
             user.addressContract =  auditData.y.addCont;
             user.addressTransaction = auditData.y.addTran;
-            user.nameOfUser = req.body.nameOfUser;
-            user.status = req.body.status;
-            user.creationDate  = req.body.creationDate;
-
-
             //var key = req.body.key; //REVISAR
             //var hashX = req.body.hashX; //REVISAR
 
@@ -229,15 +250,17 @@ function createAdministrator(req, res){
                     var jsonData = {
                         email: req.body.email.toLowerCase(),
                         password: req.body.password,
+                        surnameA: req.body.surnameA,
+                        surnameB: req.body.surnameB,
+                        nameOfUser: req.body.nameOfUser,
                         typeOfUser: req.body.typeOfUser,
+                        status: req.body.status,
+                        creationDate: req.body.creationDate,
                         initialToken: req.body.initialToken,
+                        dp: req.body.dp,
+                        addressU: req.body.addressU,
                         typeOfOperation: req.body.typeOfOperation,
                         nameOfOperation: req.body.nameOfOperation,
-                        addressU: req.body.addressU,
-                        nameOfUser: req.body.nameOfUser,
-                        creationDate: req.body.creationDate,
-                        status: req.body.status,
-                        dp: req.body.dp
                     };
                     var hashX = md5(JSON.stringify(jsonData));
                     /*
@@ -260,7 +283,9 @@ function createAdministrator(req, res){
                                             if(!userStored) {
                                                 return res.status(404).json({ message: 'El dato no ha sido guardado' });
                                             }else {
-                                                var generatedToken = service_jwt.createToken(user); //Guardar token en la base de datos
+                                              count = false;
+                                              req.session.flag = 0;
+                                              var generatedToken = service_jwt.createToken(user); //Guardar token en la base de datos
                                                 token.tokenCreation(generatedToken, user.email);
                                                 return res.status(200).json({
                                                     message: generatedToken //Guardar el token
@@ -295,7 +320,7 @@ function createAdministrator(req, res){
 }
 
 function createTUser(req, res){
-    console.log(req.body);
+    var ip = req.header('x-forwarded-for') || req.connection.remoteAddress;
     serviceInit(req, req.headers.authorization, function(data, err) {
         if (err) {
             res.status(500).send({ message: 'Error en la petición' });
@@ -304,16 +329,18 @@ function createTUser(req, res){
             var auditData = data;
 
             user.email = req.body.email.toLowerCase();
+            user.surnameA = req.body.surnameA;
+            user.surnameB = req.body.surnameB;
+            user.nameOfUser = req.body.nameOfUser;
             user.typeOfUser = req.body.typeOfUser;
-            user.initialToken = req.body.initialToken;
+            user.ip = ip;
+            user.status = req.body.status;
+            user.creationDate = req.body.creationDate;
+            user.initialToken = req.headers.authorization;
             user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
             user.addressU = req.body.addressU;
             user.addressContract =  auditData.y.addCont;
             user.addressTransaction = auditData.y.addTran;
-            user.nameOfUser = req.body.nameOfUser;
-            user.status = req.body.status;
-            user.creationDate  = req.body.creationDate;
-
             //var key = req.body.key; //REVISAR
             //var hashX = req.body.hashX; //REVISAR
 
@@ -326,15 +353,17 @@ function createTUser(req, res){
                     var jsonData = {
                         email: req.body.email.toLowerCase(),
                         password: req.body.password,
+                        surnameA: req.body.surnameA,
+                        surnameB: req.body.surnameB,
+                        nameOfUser: req.body.nameOfUser,
                         typeOfUser: req.body.typeOfUser,
+                        status: req.body.status,
+                        creationDate: req.body.creationDate,
                         initialToken: req.body.initialToken,
+                        dp: req.body.dp,
+                        addressU: req.body.addressU,
                         typeOfOperation: req.body.typeOfOperation,
                         nameOfOperation: req.body.nameOfOperation,
-                        addressU: req.body.addressU,
-                        nameOfUser: req.body.nameOfUser,
-                        creationDate: req.body.creationDate,
-                        status: req.body.status,
-                        dp: req.body.dp
                     };
                     var hashX = md5(JSON.stringify(jsonData));
                     /*
@@ -353,7 +382,7 @@ function createTUser(req, res){
                                     //Guardar usuario
                                     user.save((err, userStored) => {
                                         if(err) {
-                                            return res.status(500).json({ message: 'Error al guardar los datos' });
+                                            return res.status(500).json({ message: 'Error al guardar los datos'+err });
                                         }else {
                                             if(!userStored) {
                                                 return res.status(404).json({ message: 'El dato no ha sido guardado' });
@@ -388,6 +417,91 @@ function createTUser(req, res){
                     console.log(err);
                     return res.status(550).json(err);
                 });
+        }
+    });
+}
+
+function createConsumer(req, res){
+    var ip = req.header('x-forwarded-for') || req.connection.remoteAddress;
+    var initialToken = service_jwt.initialToken(10);
+    serviceInit(req, initialToken, function(data, err) {
+        if (err) {
+            res.status(500).send({ message: 'Error en la petición' });
+        }else {
+            var user = new User();
+            var auditData = data;
+
+            user.email = req.body.email.toLowerCase();
+            user.surnameA = req.body.surnameA;
+            user.surnameB = req.body.surnameB;
+            user.nameOfUser = req.body.nameOfUser;
+            user.typeOfUser = req.body.typeOfUser;
+            user.ip = ip;
+            user.status = req.body.status; //El cliente por defecto debería asignar este valor a falso y verdaero para los demás
+            user.creationDate = req.body.creationDate;
+            user.initialToken = initialToken;
+            user.dp = req.body.dp; //DP ahora es un dato estático, pero debería cambiarse cuando esté lista la vista
+            user.addressU = req.body.addressU;
+            user.addressContract =  auditData.y.addCont;
+            user.addressTransaction = auditData.y.addTran;
+
+            //Pruebas con MD5
+            var jsonData = {
+                email: req.body.email.toLowerCase(),
+                password: req.body.password,
+                surnameA: req.body.surnameA,
+                surnameB: req.body.surnameB,
+                nameOfUser: req.body.nameOfUser,
+                typeOfUser: req.body.typeOfUser,
+                status: req.body.status,
+                creationDate: req.body.creationDate,
+                initialToken: req.body.initialToken,
+                dp: req.body.dp,
+                addressU: req.body.addressU,
+                typeOfOperation: req.body.typeOfOperation,
+                nameOfOperation: req.body.nameOfOperation,
+            };
+            var hashX = md5(JSON.stringify(jsonData));
+
+            if(user.initialToken == auditData.Token && req.body.hashX == hashX){
+            //REVISAR SI EXISTE EL TIPO DE OPERACIÓN QUE SE ESTÁ EJECUTANDO
+                if(req.body.password){
+                    //Encriptar contraseñas
+                    bcrypt.hash(req.body.password, null, null, function(err, hash){
+                        user.password = hash;
+                        if(user.email != null && user.password != null && user.addressContract != null && user.addressTransaction != null && user.typeOfUser != null && user.initialToken != null){
+                            //Guardar usuario
+                            user.save((err, userStored) => {
+                                if(err) {
+                                    res.status(500).send({ message: 'Error al guardar los datos' });
+                                }else{
+                                    if(!userStored) {
+                                        res.status(404).send({ message: 'El dato no ha sido guardado' });
+                                    }else{
+                                        token.tokenCreation(user.initialToken, user.email); //Guarda token en la base de datos
+                                        /*res.status(200).send({
+                                            message: userStored
+                                        });*/
+                                        req.body.typeOfOperation = 'authentication';
+                                        req.body.nameOfOperation = 'loginUser';
+                                        confirmation.sendEmail(user.email);
+                                        token.authenticate(req, res);
+                                    }
+                                }
+                            });
+                        }else {
+                            res.status(200).send({ message: 'Rellena todos los campos' });
+                        }
+                    });
+                }else {
+                    res.status(200).send({ message: 'Introduce la contraseña' });
+                }
+            }else if(user.initialToken != auditData.Token){
+                res.status(404).send({ message: 'Errores en los datos initialToken (users): '+user.initialToken+' - Token (audit): '+auditData.Token });
+                //res.status(404).send({ message: 'No tienes permisos para crear usuarios de tipo administrador' });
+            }else if(req.body.hashX != hashX){
+                res.status(404).json({ message: 'Errores en los datos hashX (client): '+req.body.hashX+' - hashX(api): '+hashX });
+            }
         }
     });
 }
@@ -469,16 +583,19 @@ function updateMe(req, res){
         var payload = service_jwt.decodeToken(tokeninitial);
         var id = req.params.id.toLowerCase(); //CAMBIAR ESTE DATO POR LA VARIABLE QUE CONTENDRÁ LOS ID's DE LOS USUARIOS REGISTRADOS
         var jsonData = {
-            email: id,
+            email: req.body.email.toLowerCase(),
             password: req.body.password,
+            surnameA: req.body.surnameA,
+            surnameB: req.body.surnameB,
+            nameOfUser: req.body.nameOfUser,
             typeOfUser: req.body.typeOfUser,
+            status: req.body.status,
+            creationDate: req.body.creationDate,
             initialToken: req.body.initialToken,
+            dp: req.body.dp,
+            addressU: req.body.addressU,
             typeOfOperation: req.body.typeOfOperation,
             nameOfOperation: req.body.nameOfOperation,
-            addressU: req.body.addressU,
-            nameOfUser: req.body.nameOfUser,
-            status: req.body.status,
-            dp: req.body.dp
         };
         //console.log(jsonData);
         var hashX = md5(JSON.stringify(jsonData));
@@ -493,7 +610,7 @@ function updateMe(req, res){
             if(req.body.password){
                 bcrypt.hash(req.body.password, null, null, function(err, hash){
                     req.body.password = hash;
-                    User.findOneAndUpdate({ email: id }, {password: req.body.password, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
+                    User.findOneAndUpdate({ email: id }, {password: req.body.password, surnameA: req.body.surnameA, surnameB: req.body.surnameB, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
                         if(err){
                             res.status(500).send({message: 'Error al actualizar los datos'});
                         }else{
@@ -506,7 +623,7 @@ function updateMe(req, res){
                     });
                 });
             }else{
-                User.findOneAndUpdate({ email: id }, {nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
+                User.findOneAndUpdate({ email: id }, {surnameA: req.body.surnameA, surnameB: req.body.surnameB, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
                     if(err){
                         res.status(500).send({message: 'Error al actualizar los datos'});
                     }else{
@@ -541,7 +658,6 @@ function updateMe(req, res){
 
 //Cambiar nombre de tokeninitial a token
 function updateAdministrator(req, res){
-    //console.log(req.body);
     var tokeninitial = req.headers.authorization;
     var typeOfOperation = req.body.typeOfOperation;
     var nameOfOperation = req.body.nameOfOperation;
@@ -558,16 +674,19 @@ function updateAdministrator(req, res){
                     res.status(404).send({message: 'No se ha encontrado el dato'});
                 }else {
                     var jsonData = {
-                        email: id,
+                        email: req.body.email.toLowerCase(),
                         password: req.body.password,
+                        surnameA: req.body.surnameA,
+                        surnameB: req.body.surnameB,
+                        nameOfUser: req.body.nameOfUser,
                         typeOfUser: req.body.typeOfUser,
+                        status: req.body.status,
+                        creationDate: req.body.creationDate,
                         initialToken: req.body.initialToken,
+                        dp: req.body.dp,
+                        addressU: req.body.addressU,
                         typeOfOperation: req.body.typeOfOperation,
                         nameOfOperation: req.body.nameOfOperation,
-                        addressU: req.body.addressU,
-                        nameOfUser: req.body.nameOfUser,
-                        status: req.body.status,
-                        dp: req.body.dp
                     };
                     var hashX = md5(JSON.stringify(jsonData));
                     /*console.log(hashX);
@@ -581,7 +700,7 @@ function updateAdministrator(req, res){
                         if(req.body.password){
                             bcrypt.hash(req.body.password, null, null, function(err, hash){
                                 req.body.password = hash;
-                                User.findOneAndUpdate({ email: id }, {password: req.body.password, dp: req.body.dp, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
+                                User.findOneAndUpdate({ email: id }, {password: req.body.password, surnameA: req.body.surnameA, surnameB: req.body.surnameB, nameOfUser: req.body.nameOfUser, status: req.body.status, dp: req.body.dp}, (err, userUpdate) => {
                                     if(err){
                                         res.status(500).send({message: 'Error al actualizar los datos'});
                                     }else{
@@ -596,7 +715,7 @@ function updateAdministrator(req, res){
                                 });
                             });
                         }else if(!req.body.password){
-                            User.findOneAndUpdate({ email: id }, {dp: req.body.dp, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
+                            User.findOneAndUpdate({ email: id }, {surnameA: req.body.surnameA, surnameB: req.body.surnameB, nameOfUser: req.body.nameOfUser, status: req.body.status, dp: req.body.dp}, (err, userUpdate) => {
                                 if(err){
                                     res.status(500).send({message: 'Error al actualizar los datos'});
                                 }else{
@@ -638,16 +757,19 @@ function updateTUser(req, res){
         //var query = { email: id };
 
         var jsonData = {
-            email: id,
+            email: req.body.email.toLowerCase(),
             password: req.body.password,
+            surnameA: req.body.surnameA,
+            surnameB: req.body.surnameB,
+            nameOfUser: req.body.nameOfUser,
             typeOfUser: req.body.typeOfUser,
+            status: req.body.status,
+            creationDate: req.body.creationDate,
             initialToken: req.body.initialToken,
+            dp: req.body.dp,
+            addressU: req.body.addressU,
             typeOfOperation: req.body.typeOfOperation,
             nameOfOperation: req.body.nameOfOperation,
-            addressU: req.body.addressU,
-            nameOfUser: req.body.nameOfUser,
-            status: req.body.status,
-            dp: req.body.dp
         };
         var hashX = md5(JSON.stringify(jsonData));
         /*
@@ -662,7 +784,7 @@ function updateTUser(req, res){
             if(req.body.password){
                 bcrypt.hash(req.body.password, null, null, function(err, hash){
                     req.body.password = hash;
-                    User.findOneAndUpdate({ email: id }, {password: req.body.password, dp: req.body.dp, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
+                    User.findOneAndUpdate({ email: id }, {password: req.body.password, surnameA: req.body.surnameA, surnameB: req.body.surnameB, nameOfUser: req.body.nameOfUser, status: req.body.status, dp: req.body.dp}, (err, userUpdate) => {
                         if(err){
                             res.status(500).send({message: 'Error al actualizar los datos'});
                         }else{
@@ -677,7 +799,7 @@ function updateTUser(req, res){
                     });
                 });
             } else if(!req.body.password){
-                User.findOneAndUpdate({ email: id }, {dp: req.body.dp, nameOfUser: req.body.nameOfUser, status: req.body.status}, (err, userUpdate) => {
+                User.findOneAndUpdate({ email: id }, {surnameA: req.body.surnameA, surnameB: req.body.surnameB, nameOfUser: req.body.nameOfUser, status: req.body.status, dp: req.body.dp}, (err, userUpdate) => {
                     if(err){
                         res.status(500).send({message: 'Error al actualizar los datos'});
                     }else{
@@ -770,7 +892,7 @@ function deleteMe(req, res){
         }else if(req.body.email){
             res.status(404).send({message: 'No puedes eliminar tu email - contacta con el desarrollador'});
         }else{
-            res.status(404).send({ message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - ID (users) : '+id +' - ID (token): '+payload._id+' - Email: '+req.body.email });
+            res.status(404).send({message: 'Errores en los datos typeOfOperationOK: '+typeOfOperationOK+' - ID (users) : '+id +' - ID (token): '+payload._id+' - Email: '+req.body.email });
         }
     })
     .catch(err => {
@@ -1021,6 +1143,7 @@ function registerUser(req, res){
                                         token.tokenCreation(generatedToken, consumer.email);
                                         req.body.typeOfOperation = 'authentication';
                                         req.body.nameOfOperation = 'loginUser';
+                                        confirmation.sendEmail(email);
                                         token.authenticateConsumers(req, res);
                                     }
                                 }
@@ -1038,7 +1161,7 @@ function registerUser(req, res){
             }
         }
     });
-    
+
 }
 
 function updateConsumer(req, res){

@@ -18,6 +18,7 @@ RUN apt-get install mongodb-clients -y
 WORKDIR /avocado/users
 COPY ["package.json", "package-lock.json*", "./"]
 RUN npm install
+RUN npm update
 COPY . .
 EXPOSE 3001
-CMD npm start
+CMD ./how2Start

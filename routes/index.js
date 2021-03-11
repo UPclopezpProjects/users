@@ -1,8 +1,13 @@
 var path = require('path');
 var express = require('express');
-var router = express.Router();
-var md_auth = require('../middlewares/authenticated');
+var jwt = require('jwt-simple');
+var moment = require('moment');
 
+var md_auth = require('../middlewares/authenticated');
+var Token = require("../models/Tokens");
+var User = require("../models/Users");
+var service_jwt = require('../services/jwt');
+var router = express.Router();
 
 //var main = require('../controller/index.js');
 //var modelRoot = require('../controller/modelRoot.js');
@@ -18,6 +23,8 @@ var UserController = require('../controller/user');
 var TokenController = require('../controller/token');
 var PermitController = require('../controller/permit');
 var TransactionController = require('../controller/transaction');
+var EmailController = require('../services/email');
+
 
 //************************************************
 //************************************************
@@ -79,6 +86,38 @@ router.delete('/userDelete/:id', UserController.userDelete);
 
 
 //Authentication
+router.get('/getInitialToken', function (req, res) {
+	validTime = moment().unix();
+	if (count == true) {
+		if (validTime > expiredTime) {
+			Token.remove({email: 'email for initialToken'}, (err, tokenDelete) => {
+				if(err){
+					res.status(500).send({message: 'Error en la petición'});
+				}else{
+					expiredTime = moment().add(5000, 'ms').unix();
+					var initialToken = service_jwt.initialToken(20); //Guardar token en la base de datos
+					TokenController.tokenCreation(initialToken, 'email for initialToken');
+					res.status(200).send({ message: true, token: initialToken });
+				}
+			});
+		}else {
+			//if (req.session.ID != req.sessionID) {
+				//res.status(200).send({ message: 'El servicio está siendo usado, intente de nuevo más tarde' });
+			//}else {
+				res.status(200).send({ message: 'El servicio está siendo usado' });
+			//}
+		}
+	}else {
+		//req.session.ID = req.sessionID;
+		//console.log(req.session.ID);
+		count = true;
+		expiredTime = moment().add(5000, 'ms').unix();
+		var initialToken = service_jwt.initialToken(20); //Guardar token en la base de datos
+		TokenController.tokenCreation(initialToken, 'email for initialToken');
+		res.status(200).send({ message: true, token: initialToken });
+	}
+});
+//router.get('/getInitialToken', TokenController.getInitialToken(req, res, booleanToken));
 router.post('/login', TokenController.authenticate);
 //router.post('/login/token', TokenController.checkTokens);
 router.put('/tokenRenovation', TokenController.tokenRenovation);
@@ -91,13 +130,15 @@ router.post('/tokenIsValid', TokenController.tokenIsValid);
 router.get('/permitions', PermitController.permitions);
 
 
-//merchant
+//Merchant
 router.post('/merchantData', TransactionController.merchantData);
+
+
+//Email
+router.get('/getEmail', EmailController.getEmail);
+//router.post('/sendEmail', EmailController.sendEmail);
 
 /*----------Pruebas de conexión y obtención de datos----------*/
 
 
 module.exports = router;
-
-
-
